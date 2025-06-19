@@ -1,242 +1,338 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Import your images
+import dianiImage from './images/diani.jpg';
+import tokyoImage from './images/tokyo.jpg';
+import monacoImage from './images/monaco.jpg';
+import dubaiImage from './images/dubai.jpg';
+import londonImage from './images/london.jpg';
+import nyImage from './images/new-york.jpg';
+import parisImage from './images/paris.jpg';
+import berlinImage from './images/berlin.jpg';
 
 const sections = [
-  { id: 'Diani,KENYA', title: 'Diani', theme: 'blue' },
-  { id: 'Tokyo,JAPAN', title: 'Tokyo', theme: 'pink' },
-  { id: 'Monaco,', title: 'Monaco', theme: 'red' },
-  { id: 'Dubai,UNITED ARAB EMIRATES', title: 'Dubai', theme: 'gold' },
-  { id: 'London,UNITED KINGDOM', title: 'London', theme: 'brown' },
-  { id: 'New York,USA', title: 'New York', theme: 'indigo' },
-  { id: 'Paris,FRANCE', title: 'Paris', theme: 'purple' },
-  { id: 'Berlin,GERMANY', title: 'Berlin', theme: 'teal' },
+  { 
+    id: 'Diani,KENYA', 
+    title: 'Diani', 
+    theme: 'blue',
+    image: dianiImage,
+    filter: 'rgba(32, 178, 170, 0.4)',
+    accentColor: '#20b2aa'
+  },
+  { 
+    id: 'Tokyo,JAPAN', 
+    title: 'Tokyo', 
+    theme: 'pink',
+    image: tokyoImage,
+    filter: 'rgba(231, 84, 128, 0.4)',
+    accentColor: '#e75480'
+  },
+  { 
+    id: 'Monaco,', 
+    title: 'Monaco', 
+    theme: 'red',
+    image: monacoImage,
+    filter: 'rgba(231, 76, 60, 0.4)',
+    accentColor: '#e74c3c'
+  },
+  { 
+    id: 'Dubai,UNITED ARAB EMIRATES', 
+    title: 'Dubai', 
+    theme: 'gold',
+    image: dubaiImage,
+    filter: 'rgba(255, 215, 0, 0.4)',
+    accentColor: '#ffd700'
+  },
+  { 
+    id: 'London,UNITED KINGDOM', 
+    title: 'London', 
+    theme: 'brown',
+    image: londonImage,
+    filter: 'rgba(139, 92, 42, 0.4)',
+    accentColor: '#8b5c2a'
+  },
+  { 
+    id: 'New York,USA', 
+    title: 'New York', 
+    theme: 'indigo',
+    image: nyImage,
+    filter: 'rgba(75, 0, 130, 0.4)',
+    accentColor: '#4b0082'
+  },
+  { 
+    id: 'Paris,FRANCE', 
+    title: 'Paris', 
+    theme: 'purple',
+    image: parisImage,
+    filter: 'rgba(142, 68, 173, 0.4)',
+    accentColor: '#8e44ad'
+  },
+  { 
+    id: 'Berlin,GERMANY', 
+    title: 'Berlin', 
+    theme: 'teal',
+    image: berlinImage,
+    filter: 'rgba(32, 207, 207, 0.4)',
+    accentColor: '#20cfcf'
+  },
 ];
-
-const themeColors = {
-  blue: '#20b2aa',
-  pink: '#e75480',
-  red: '#e74c3c',
-  gold: '#ffd700',
-  brown: '#8b5c2a',
-  indigo: '#4b0082',
-  purple: '#8e44ad',
-  teal: '#20cfcf'
-};
 
 const LandingPage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [direction, setDirection] = useState(1);
   const [hovered, setHovered] = useState(false);
   const navigate = useNavigate();
+  const timeoutRef = useRef(null);
+
+  const resetTimeout = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+  };
 
   useEffect(() => {
+    resetTimeout();
     if (!hovered) {
-      const interval = setInterval(() => {
+      timeoutRef.current = setTimeout(() => {
+        setDirection(1);
         setCurrentSlide((prev) => (prev + 1) % sections.length);
-      }, 7000);
-      return () => clearInterval(interval);
+      }, 5000);
     }
-  }, [hovered]);
+
+    return () => {
+      resetTimeout();
+    };
+  }, [currentSlide, hovered]);
 
   const handleVisitNow = (section) => {
     navigate(`/visit/${section.title.toLowerCase().replace(/\s+/g, '')}`);
   };
 
   const handlePrev = () => {
+    setDirection(-1);
     setCurrentSlide((prev) => (prev === 0 ? sections.length - 1 : prev - 1));
+    resetTimeout();
   };
 
   const handleNext = () => {
+    setDirection(1);
     setCurrentSlide((prev) => (prev + 1) % sections.length);
+    resetTimeout();
+  };
+
+  // Unified transition settings
+  const transitionConfig = {
+    type: 'spring',
+    stiffness: 100,
+    damping: 20,
+    duration: 0.5
+  };
+
+  const variants = {
+    enter: (direction) => ({
+      opacity: 0,
+      x: direction > 0 ? 1000 : -1000,
+    }),
+    center: {
+      zIndex: 1,
+      opacity: 1,
+      x: 0,
+    },
+    exit: (direction) => ({
+      zIndex: 0,
+      opacity: 0,
+      x: direction < 0 ? 1000 : -1000,
+    }),
+  };
+
+  const swipeConfidenceThreshold = 10000;
+  const swipePower = (offset, velocity) => {
+    return Math.abs(offset) * velocity;
   };
 
   return (
     <div
-      className={`landing-page theme-${sections[currentSlide].theme}`}
       style={{
         minHeight: '100vh',
         width: '100vw',
         height: '100vh',
-        paddingTop: 40,
         position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxSizing: 'border-box',
-        overflowX: 'hidden',
-        overflowY: 'auto',
-        background: `linear-gradient(135deg, ${themeColors[sections[currentSlide].theme]}33 0%, #1a3a3a 100%)`,
-        fontFamily: 'EuclidSquare, Inter, Segoe UI, Arial, sans-serif'
+        overflow: 'hidden',
+        backgroundColor: '#000'
       }}
     >
-      {/* Previous Arrow */}
-      <button
-        onClick={handlePrev}
-        aria-label="Previous Location"
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: 24,
-          transform: 'translateY(-50%)',
-          background: themeColors[sections[currentSlide].theme],
-          border: 'none',
-          color: '#fff',
-          fontSize: 40,
-          borderRadius: '50%',
-          width: 54,
-          height: 54,
-          cursor: 'pointer',
-          zIndex: 10,
-          boxShadow: '0 0 16px 4px rgba(46,229,157,0.25)',
-          fontFamily: 'EuclidSquare, Inter, Segoe UI, Arial, sans-serif'
-        }}
-      >
-        &#8592;
-      </button>
-
-      {/* Carousel Content */}
-      <div
-        style={{
-          textAlign: 'center',
-          background: 'rgba(255,255,255,0.07)',
-          borderRadius: 24,
-          padding: '48px 32px 40px 32px',
-          margin: 0,
-          maxWidth: 480,
-          minWidth: 320,
-          width: '90vw',
-          boxShadow: `0 0 32px 0 ${themeColors[sections[currentSlide].theme]}55`,
-          border: `3px solid ${themeColors[sections[currentSlide].theme]}`,
-          transition: 'border 0.5s, box-shadow 0.5s',
-          fontFamily: 'EuclidSquare, Inter, Segoe UI, Arial, sans-serif'
-        }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        <h2
+      {/* Background Images with Synchronized Transition */}
+      <AnimatePresence custom={direction} initial={false}>
+        <motion.div
+          key={currentSlide}
+          custom={direction}
+          variants={variants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={transitionConfig}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={1}
+          onDragEnd={(e, { offset, velocity }) => {
+            const swipe = swipePower(offset.x, velocity.x);
+            if (swipe < -swipeConfidenceThreshold) {
+              handleNext();
+            } else if (swipe > swipeConfidenceThreshold) {
+              handlePrev();
+            }
+          }}
           style={{
-            fontSize: 40,
-            marginBottom: 18,
-            color: themeColors[sections[currentSlide].theme],
-            letterSpacing: 2,
-            fontWeight: 700,
-            textShadow: `0 2px 12px ${themeColors[sections[currentSlide].theme]}55`,
-            opacity: hovered ? 0.8 : 1,
-            transition: 'opacity 0.6s cubic-bezier(0.77,0,0.175,1)',
-            fontFamily: 'EuclidSquare, Inter, Segoe UI, Arial, sans-serif'
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: `url(${sections[currentSlide].image})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            zIndex: 0,
           }}
         >
-          {sections[currentSlide].title}
-        </h2>
-        <button
-          onClick={() => handleVisitNow(sections[currentSlide])}
-          style={{
-            padding: '16px 36px',
-            borderRadius: 12,
-            border: 'none',
-            background: themeColors[sections[currentSlide].theme],
-            color: '#fff',
-            fontWeight: 'bold',
-            fontSize: 22,
-            cursor: 'pointer',
-            boxShadow: `0 2px 16px ${themeColors[sections[currentSlide].theme]}55`,
-            marginTop: 12,
-            transition: 'background 0.3s, box-shadow 0.3s',
-            fontFamily: 'EuclidSquare, Inter, Segoe UI, Arial, sans-serif'
-          }}
-        >
-          Visit now 
-        </button>
-      </div>
-
-      {/* Dots for current location */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: 12,
-          marginTop: 32,
-          maxWidth: '90vw',
-          flexWrap: 'wrap',
-          fontFamily: 'EuclidSquare, Inter, Segoe UI, Arial, sans-serif'
-        }}
-      >
-        {sections.map((_, i) => (
-          <span
-            key={i}
+          {/* Color Filter with Matching Animation */}
+          <motion.div
+            key={`filter-${currentSlide}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={transitionConfig}
             style={{
-              width: 18,
-              height: 18,
-              borderRadius: '50%',
-              background: i === currentSlide ? themeColors[sections[currentSlide].theme] : '#ccc',
-              display: 'inline-block',
-              boxShadow: i === currentSlide ? `0 0 8px 2px ${themeColors[sections[currentSlide].theme]}88` : 'none',
-              border: i === currentSlide ? `2px solid #fff` : 'none',
-              transition: 'background 0.3s, box-shadow 0.3s, border 0.3s'
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: sections[currentSlide].filter,
+              zIndex: 1
             }}
           />
-        ))}
-      </div>
+        </motion.div>
+      </AnimatePresence>
 
-      {/* Location Chips */}
+      {/* Content */}
       <div
         style={{
+          position: 'relative',
+          zIndex: 2,
+          minHeight: '100vh',
+          width: '100vw',
+          height: '100vh',
           display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
           justifyContent: 'center',
-          gap: 10,
-          marginTop: 32,
-          flexWrap: 'wrap',
-          maxWidth: '95vw',
-          fontFamily: 'EuclidSquare, Inter, Segoe UI, Arial, sans-serif'
+          fontFamily: 'Inter, sans-serif'
         }}
       >
-        {sections.map((section, idx) => (
-          <button
-            key={section.id}
-            onClick={() => setCurrentSlide(idx)}
+        {/* Main Content */}
+        <motion.div
+          key={`content-${currentSlide}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={transitionConfig}
+          style={{
+            textAlign: 'center',
+            padding: '40px',
+            margin: '0 auto',
+            maxWidth: '600px',
+            position: 'relative',
+            zIndex: 2,
+            
+            
+          }}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          <motion.h2
+            key={`title-${currentSlide}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
             style={{
-              padding: '8px 18px',
-              borderRadius: 20,
-              border: idx === currentSlide ? `2px solid ${themeColors[sections[currentSlide].theme]}` : '1px solid #bbb',
-              background: idx === currentSlide ? themeColors[sections[currentSlide].theme] : '#fff',
-              color: idx === currentSlide ? '#fff' : '#222',
-              fontWeight: idx === currentSlide ? 700 : 500,
-              fontSize: 15,
-              cursor: 'pointer',
-              boxShadow: idx === currentSlide ? `0 2px 8px ${themeColors[sections[currentSlide].theme]}55` : 'none',
-              transition: 'all 0.3s',
-              fontFamily: 'EuclidSquare, Inter, Segoe UI, Arial, sans-serif'
+              fontSize: '4rem',
+              marginBottom: '1rem',
+              color: '#fff',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '4px',
+              textShadow: `0 0 20px ${sections[currentSlide].filter}`,
             }}
           >
-            {section.title}
-          </button>
-        ))}
-      </div>
+            {sections[currentSlide].title}
+          </motion.h2>
+          
+          <motion.button
+            onClick={() => handleVisitNow(sections[currentSlide])}
+            whileHover={{ 
+              scale: 1.05,
+              backgroundColor: sections[currentSlide].accentColor,
+              color: '#000'
+            }}
+            whileTap={{ scale: 0.95 }}
+            style={{
+              padding: '16px 40px',
+              borderRadius: '0',
+              border: `2px solid ${sections[currentSlide].accentColor}`,
+              background: 'transparent',
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '2px',
+            }}
+          >
+            Explore
+          </motion.button>
+        </motion.div>
 
-      {/* Next Arrow */}
-      <button
-        onClick={handleNext}
-        aria-label="Next Location"
-        style={{
-          position: 'absolute',
-          top: '50%',
-          right: 24,
-          transform: 'translateY(-50%)',
-          background: themeColors[sections[currentSlide].theme],
-          border: 'none',
-          color: '#fff',
-          fontSize: 40,
-          borderRadius: '50%',
-          width: 54,
-          height: 54,
-          cursor: 'pointer',
-          zIndex: 10,
-          boxShadow: '0 0 16px 4px rgba(46,229,157,0.25)',
-          fontFamily: 'EuclidSquare, Inter, Segoe UI, Arial, sans-serif'
-        }}
-      >
-        &#8594;
-      </button>
+        {/* Dots Indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '12px',
+            position: 'absolute',
+            bottom: '40px',
+            left: '50%',
+            transform: 'translateX(-50%)'
+          }}
+        >
+          {sections.map((_, i) => (
+            <motion.button
+              key={i}
+              onClick={() => {
+                setDirection(i > currentSlide ? 1 : -1);
+                setCurrentSlide(i);
+                resetTimeout();
+              }}
+              whileHover={{ scale: 1.2 }}
+              style={{
+                width: i === currentSlide ? '24px' : '12px',
+                height: '12px',
+                borderRadius: '6px',
+                background: i === currentSlide ? sections[currentSlide].accentColor : 'rgba(255,255,255,0.3)',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                transition: 'all 0.3s ease'
+              }}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
+        </motion.div>
+      </div>
       
     </div>
   );

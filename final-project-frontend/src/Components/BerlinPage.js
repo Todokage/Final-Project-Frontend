@@ -1,38 +1,44 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthPage from './AuthPage';
+import { motion } from 'framer-motion';
 
+// Modern color theme with edgy accents
 const theme = {
-  primary: "#22223b",
-  accent: "#4ea8de",
-  accent2: "#4361ee",
-  bg: "#f8f9fa",
-  card: "#fff",
-  border: "#e0e1dd",
-  shadow: "rgba(34,34,59,0.08)"
+  primary: "#0a0a0a",
+  secondary: "#1a1a1a",
+  accent: "#ff4d4d",
+  accent2: "#ff9a3d",
+  bg: "#f0f0f0",
+  card: "#ffffff",
+  border: "#e0e0e0",
+  shadow: "rgba(0,0,0,0.15)",
+  text: "#333",
+  lightText: "#888"
 };
 
-// 1 EUR = 140 KES (example rate, update as needed)
 const EUR_TO_KES = 140;
 
 const hotels = [
   {
     name: "Hotel Adlon Kempinski",
-    description: "Luxury hotel at Brandenburg Gate, classic Berlin elegance.",
-    price: 200 * EUR_TO_KES,
+    description: "Luxury hotel at Brandenburg Gate with classic Berlin elegance",
+    price: 25 * EUR_TO_KES,
     images: [
       "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
       "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=800&q=80"
-    ]
+    ],
+    tags: ["Luxury", "Historic", "Central"]
   },
   {
     name: "25hours Hotel Bikini Berlin",
-    description: "Trendy hotel with zoo and city views, urban jungle vibes.",
-    price: 220 * EUR_TO_KES,
+    description: "Trendy urban jungle with zoo and city views",
+    price: 20 * EUR_TO_KES,
     images: [
       "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=800&q=80",
       "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
-    ]
+    ],
+    tags: ["Hip", "Creative", "Vibrant"]
   }
 ];
 
@@ -40,12 +46,12 @@ const slides = [
   {
     title: 'Brandenburg Gate',
     image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
-    description: 'Berlin’s most famous landmark.'
+    description: 'Iconic neoclassical monument of Berlin'
   },
   {
     title: 'Berlin Wall',
     image: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80',
-    description: 'History and street art at the East Side Gallery.'
+    description: 'East Side Gallery - the longest open-air gallery in the world'
   }
 ];
 
@@ -64,68 +70,60 @@ const BerlinPage = () => {
   });
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [stkStatus, setStkStatus] = useState(null);
-
-  // Auth state
   const [showAuth, setShowAuth] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Home button visibility logic
   const navbarRef = useRef(null);
   const [showHomeBtn, setShowHomeBtn] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
+  // Scroll effects
   useEffect(() => {
     const handleScroll = () => {
       if (!navbarRef.current) return;
       const navbarBottom = navbarRef.current.getBoundingClientRect().bottom;
       setShowHomeBtn(navbarBottom < 0);
+      setIsScrolled(window.scrollY > 50);
     };
+    
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Image carousel effects
   useEffect(() => {
     let imgInterval;
     if (modalHotel) {
       imgInterval = setInterval(() => {
-        setModalImageIdx((prev) =>
-          prev === modalHotel.images.length - 1 ? 0 : prev + 1
-        );
+        setModalImageIdx(prev => (prev + 1) % modalHotel.images.length);
       }, 3500);
     }
     return () => clearInterval(imgInterval);
   }, [modalHotel, modalHotel?.images.length]);
 
+  // Slide rotation
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 12000);
+      setCurrentSlide(prev => (prev + 1) % slides.length);
+    }, 8000);
     return () => clearInterval(interval);
   }, []);
 
-  const slide = slides[currentSlide];
-
   const handlePrevImage = () => {
-    setModalImageIdx((prev) =>
-      prev === 0 ? modalHotel.images.length - 1 : prev - 1
-    );
+    setModalImageIdx(prev => (prev - 1 + modalHotel.images.length) % modalHotel.images.length);
   };
+
   const handleNextImage = () => {
-    setModalImageIdx((prev) =>
-      prev === modalHotel.images.length - 1 ? 0 : prev + 1
-    );
+    setModalImageIdx(prev => (prev + 1) % modalHotel.images.length);
   };
 
   const handleBookingChange = (e) => {
     const { name, value } = e.target;
-    setBookingForm((prev) => ({ ...prev, [name]: value }));
+    setBookingForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const totalPrice = modalHotel
-    ? modalHotel.price * (parseInt(bookingForm.guests, 10) || 1)
-    : 0;
+  const totalPrice = modalHotel ? modalHotel.price * (parseInt(bookingForm.guests, 10) || 1) : 0;
 
-  const simulateSTKPush = (phone, amount) => {
+  const simulateSTKPush = () => {
     setStkStatus('pending');
     setTimeout(() => {
       setStkStatus('success');
@@ -133,726 +131,873 @@ const BerlinPage = () => {
     }, 2000);
   };
 
-  // Require login before confirming booking
   const handleBookingSubmit = (e) => {
     e.preventDefault();
-    setStkStatus(null);
     if (!isAuthenticated) {
       setShowAuth(true);
       return;
     }
-    simulateSTKPush(bookingForm.phone, totalPrice);
+    simulateSTKPush();
   };
 
-  // Auth success callback
   const handleAuthSuccess = () => {
     setIsAuthenticated(true);
     setShowAuth(false);
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        width: '100vw',
-        background: theme.bg,
-        fontFamily: "Inter, 'Segoe UI', Arial, sans-serif",
-        overflowX: "hidden",
-        boxSizing: "border-box"
-      }}
-    >
-      {/* Modern Hero Section */}
-      <div
-        ref={navbarRef}
-        style={{
+    <div style={{
+      minHeight: '100vh',
+      width: '100vw',
+      background: theme.bg,
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+      overflowX: "hidden"
+    }}>
+      {/* Edgy Hero Section with Diagonal Cut */}
+      <div ref={navbarRef} style={{
+        width: '100%',
+        minHeight: '80vh',
+        background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        clipPath: 'polygon(0 0, 100% 0, 100% 70%, 0 100%)',
+        marginBottom: '-10vh'
+      }}>
+        <img src={slides[currentSlide].image} alt={slides[currentSlide].title} style={{
+          position: 'absolute',
           width: '100%',
-          minHeight: 340,
-          background: `linear-gradient(120deg, ${theme.accent2} 0%, ${theme.accent} 100%)`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          height: '100%',
+          objectFit: 'cover',
+          opacity: 0.4,
+          filter: 'grayscale(30%) contrast(120%)'
+        }} />
+        
+        <div style={{
           position: 'relative',
-          overflow: 'hidden',
-          boxShadow: `0 8px 32px 0 ${theme.shadow}`,
-          maxWidth: "100vw"
-        }}
-      >
-        <img
-          src={slide.image}
-          alt={slide.title}
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            opacity: 0.25,
-            filter: 'blur(1.5px) brightness(0.9)',
-            maxWidth: "100vw"
-          }}
-        />
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 2,
-            textAlign: 'center',
-            width: '100%',
-            maxWidth: "100vw"
-          }}
-        >
-          <h1
+          zIndex: 2,
+          textAlign: 'center',
+          padding: '0 20px',
+          maxWidth: '1200px'
+        }}>
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
             style={{
-              fontSize: 48,
+              fontSize: 'clamp(2.5rem, 8vw, 5rem)',
               fontWeight: 900,
               color: "#fff",
-              letterSpacing: 2,
-              marginBottom: 8,
-              textShadow: `0 2px 16px ${theme.accent2}99`
+              letterSpacing: '-0.03em',
+              marginBottom: '1rem',
+              textTransform: 'uppercase',
+              textShadow: '3px 3px 0 rgba(0,0,0,0.2)'
             }}
           >
-            Welcome to Berlin
-          </h1>
-          <h2
+            BERLIN
+          </motion.h1>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
             style={{
-              fontSize: 28,
-              fontWeight: 600,
-              marginBottom: 12,
+              fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
+              fontWeight: 700,
+              marginBottom: '1.5rem',
               color: "#fff",
-              textShadow: `0 2px 8px ${theme.accent}`
+              letterSpacing: '0.1em'
             }}
           >
-            {slide.title}
-          </h2>
-          <p
+            {slides[currentSlide].title}
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
             style={{
-              fontSize: 20,
+              fontSize: '1.2rem',
               color: "#fff",
-              background: "#22223b33",
-              display: "inline-block",
-              borderRadius: 12,
-              padding: "8px 24px",
-              margin: "0 auto",
-              boxShadow: `0 2px 8px ${theme.accent2}22`,
-              maxWidth: "90vw",
-              wordBreak: "break-word"
+              maxWidth: '600px',
+              margin: '0 auto',
+              lineHeight: 1.6,
+              textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
             }}
           >
-            {slide.description}
-          </p>
+            {slides[currentSlide].description}
+          </motion.p>
         </div>
-        {/* Dots */}
+
+        {/* Slide Indicators */}
         <div style={{
           position: 'absolute',
-          bottom: 18,
+          bottom: '15%',
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
-          gap: 10,
+          gap: '12px',
           zIndex: 10
         }}>
           {slides.map((_, idx) => (
-            <span
+            <button
               key={idx}
               onClick={() => setCurrentSlide(idx)}
               style={{
-                width: 14,
-                height: 14,
-                borderRadius: '50%',
-                background: idx === currentSlide ? theme.accent2 : '#fff',
-                border: idx === currentSlide ? '2px solid #fff' : 'none',
+                width: '12px',
+                height: '12px',
+                
+                background: idx === currentSlide ? '#fff' : 'rgba(255,255,255,0.3)',
+                border: 'none',
                 cursor: 'pointer',
-                boxShadow: idx === currentSlide ? `0 0 8px ${theme.accent2}` : 'none',
-                transition: 'background 0.3s, box-shadow 0.3s'
+                transition: 'all 0.3s ease',
+                transform: idx === currentSlide ? 'scale(1.3)' : 'scale(1)'
               }}
+              aria-label={`Go to slide ${idx + 1}`}
             />
           ))}
         </div>
       </div>
 
-      {/* Home button appears only after scrolling past navbar */}
+      {/* Floating Home Button */}
       {showHomeBtn && (
-        <button
+        <motion.button
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
           onClick={() => navigate('/')}
           style={{
             position: 'fixed',
-            top: 24,
-            left: 24,
-            background: theme.accent2,
+            top: '24px',
+            left: '24px',
+            background: theme.accent,
             color: '#fff',
             border: 'none',
-            borderRadius: 12,
-            padding: '12px 28px',
-            fontSize: 18,
+            
+            padding: '12px 24px',
+            fontSize: '1rem',
             fontWeight: 700,
             cursor: 'pointer',
-            zIndex: 20,
-            boxShadow: `0 2px 8px ${theme.accent2}99`,
-            transition: 'background 0.3s'
+            zIndex: 100,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          ← Home
-        </button>
+          <span style={{ fontSize: '1.2rem' }}>←</span> HOME
+        </motion.button>
       )}
 
-      {/* Hotel cards */}
-      <section
-        style={{
-          width: '100%',
-          maxWidth: 1200,
-          margin: '40px auto 0',
-          zIndex: 2,
-          position: 'relative',
-          background: theme.card,
-          borderRadius: 24,
-          boxShadow: `0 4px 32px ${theme.shadow}`,
-          padding: '32px 0 40px 0',
-          border: `1px solid ${theme.border}`,
-          boxSizing: "border-box",
-          overflowX: "auto"
-        }}
-      >
-        <h2 style={{
-          color: theme.primary,
-          textAlign: 'center',
-          marginBottom: 32,
-          fontSize: 30,
-          fontWeight: 800,
-          letterSpacing: 1
-        }}>
-          Top Hotels in Berlin
-        </h2>
+      {/* Modern Hotel Cards Section */}
+      <section style={{
+        width: '100%',
+        maxWidth: '1400px',
+        margin: '80px auto 120px',
+        padding: '0 20px',
+        position: 'relative'
+      }}>
+        <motion.h2 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          style={{
+            color: theme.primary,
+            textAlign: 'center',
+            marginBottom: '60px',
+            fontSize: '2.5rem',
+            fontWeight: 800,
+            letterSpacing: '-0.03em',
+            position: 'relative',
+            display: 'inline-block',
+            left: '50%',
+            transform: 'translateX(-50%)'
+          }}
+        >
+          Hotels
+          <span style={{
+            position: 'absolute',
+            bottom: '-10px',
+            left: '0',
+            width: '100%',
+            height: '4px',
+            background: `linear-gradient(90deg, ${theme.accent}, ${theme.accent2})`,
+            
+          }}></span>
+        </motion.h2>
+
         <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 36,
-          justifyContent: 'center',
-          maxWidth: "100%",
-          boxSizing: "border-box"
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+          gap: '40px',
+          padding: '0 20px'
         }}>
-          {hotels.map((hotel, idx) => (
-            <div
+          {hotels.map((hotel) => (
+            <motion.div
               key={hotel.name}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              whileHover={{ y: -5 }}
               style={{
-                background: "#fff",
-                borderRadius: 18,
-                padding: 22,
-                width: "min(270px, 90vw)",
-                color: theme.primary,
-                boxShadow: `0 2px 16px ${theme.shadow}`,
+                background: theme.card,
+               
+                overflow: 'hidden',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                transition: 'all 0.3s ease',
+                border: `1px solid ${theme.border}`,
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                transition: 'transform 0.3s cubic-bezier(0.77,0,0.175,1), box-shadow 0.3s',
-                cursor: 'pointer',
-                border: `1.5px solid ${theme.border}`,
-                boxSizing: "border-box",
-                minWidth: 0
+                flexDirection: 'column'
               }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
             >
-              <img
-                src={hotel.images[0]}
-                alt={hotel.name}
-                style={{
-                  width: '100%',
-                  height: 130,
-                  objectFit: 'cover',
-                  borderRadius: 12,
-                  marginBottom: 14,
-                  boxShadow: `0 2px 8px ${theme.shadow}`,
-                  maxWidth: "100%"
-                }}
-              />
-              <h3 style={{
-                marginBottom: 8,
-                fontSize: 20,
-                fontWeight: 700,
-                color: theme.accent2
-              }}>{hotel.name}</h3>
-              <p style={{
-                marginBottom: 10,
-                fontSize: 15,
-                color: theme.primary,
-                background: "#f8f9fa",
-                borderRadius: 8,
-                padding: "4px 10px"
-              }}>{hotel.description}</p>
-              <p style={{
-                marginBottom: 10,
-                fontWeight: 'bold',
-                fontSize: 16,
-                color: theme.accent
-              }}>KSH {hotel.price.toLocaleString()} per night</p>
-              <button
-                style={{
-                  marginTop: 'auto',
-                  fontSize: 16,
-                  padding: '12px 0',
-                  width: '100%',
-                  borderRadius: 8,
-                  background: theme.accent2,
-                  color: "#fff",
+              <div style={{
+                height: '220px',
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                <img
+                  src={hotel.images[0]}
+                  alt={hotel.name}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transition: 'transform 0.5s ease'
+                  }}
+                />
+                <div style={{
+                  position: 'absolute',
+                  bottom: '0',
+                  left: '0',
+                  right: '0',
+                  padding: '12px 20px',
+                  background: 'linear-gradient(transparent, rgba(0,0,0,0.7))'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    flexWrap: 'wrap'
+                  }}>
+                    {hotel.tags.map(tag => (
+                      <span key={tag} style={{
+                        background: theme.accent,
+                        color: '#fff',
+                        padding: '4px 12px',
+                        
+                        fontSize: '0.8rem',
+                        fontWeight: 600
+                      }}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{
+                padding: '24px',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                <h3 style={{
+                  fontSize: '1.5rem',
                   fontWeight: 700,
-                  border: 'none',
-                  boxShadow: `0 2px 8px ${theme.accent2}33`,
-                  cursor: 'pointer',
-                  transition: 'background 0.3s, color 0.3s'
-                }}
-                onClick={() => {
-                  setModalHotel(hotel);
-                  setModalImageIdx(0);
-                  setShowBooking(false);
-                  setBookingSuccess(false);
-                  setStkStatus(null);
-                  setBookingForm({
-                    name: '',
-                    checkIn: '',
-                    checkOut: '',
-                    guests: 1,
-                    phone: ''
-                  });
-                }}
-              >
-                View & Book
-              </button>
-            </div>
+                  marginBottom: '12px',
+                  color: theme.primary
+                }}>
+                  {hotel.name}
+                </h3>
+                
+                <p style={{
+                  color: theme.text,
+                  marginBottom: '20px',
+                  lineHeight: 1.5,
+                  flex: 1
+                }}>
+                  {hotel.description}
+                </p>
+                
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: 'auto'
+                }}>
+                  <div style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    color: theme.accent
+                  }}>
+                    KSH {hotel.price.toLocaleString()}
+                    <span style={{
+                      fontSize: '1rem',
+                      color: theme.lightText,
+                      fontWeight: 400
+                    }}>/night</span>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      setModalHotel(hotel);
+                      setModalImageIdx(0);
+                      setShowBooking(false);
+                      setBookingSuccess(false);
+                    }}
+                    style={{
+                      background: theme.primary,
+                      color: '#fff',
+                      border: 'none',
+                      padding: '12px 24px',
+                      
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                    whileHover={{ background: theme.accent }}
+                  >
+                    <span>BOOK NOW</span>
+                    <span style={{ fontSize: '1.2rem' }}>→</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* Modal for hotel details and booking */}
+      {/* Modern Modal */}
       {modalHotel && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           style={{
-            zIndex: 1002,
             position: 'fixed',
             top: 0,
             left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: '#22223bcc',
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.9)',
+            zIndex: 1000,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            padding: '20px'
           }}
         >
-          <div
+          <motion.div
+            initial={{ scale: 0.95, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
             style={{
-              minWidth: '350px',
-              width: '80vw',
+              background: theme.card,
+              
               maxWidth: '900px',
-              maxHeight: '95vh',
-              background: "#fff",
-              borderRadius: 20,
-              position: 'relative',
+              width: '100%',
+              maxHeight: '90vh',
               overflow: 'auto',
-              padding: 40,
-              margin: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              boxSizing: 'border-box',
-              justifyContent: 'center',
-              animation: 'fadeInModal 0.6s cubic-bezier(0.77,0,0.175,1)',
-              border: `2px solid ${theme.accent2}`,
-              boxShadow: `0 4px 32px ${theme.accent2}33`
+              position: 'relative',
+              boxShadow: `0 0 0 2px ${theme.accent}`
             }}
           >
             <button
+              onClick={() => setModalHotel(null)}
               style={{
                 position: 'absolute',
-                top: 20,
-                right: 32,
-                background: theme.accent2,
-                border: 'none',
-                fontSize: 32,
-                cursor: 'pointer',
+                top: '20px',
+                right: '20px',
+                background: theme.accent,
                 color: '#fff',
-                borderRadius: 12,
-                width: 44,
-                height: 44,
-                fontWeight: 900,
-                boxShadow: `0 2px 8px ${theme.accent2}99`
+                border: 'none',
+                width: '40px',
+                height: '40px',
+             
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
-              onClick={() => setModalHotel(null)}
-              aria-label="Close"
             >
-              &times;
+              ×
             </button>
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <h2 style={{
-                textAlign: 'center',
-                marginBottom: 24,
-                fontSize: 26,
-                color: theme.accent2,
-                fontWeight: 800
-              }}>{modalHotel.name}</h2>
-              <div
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  maxWidth: 700,
-                  height: 320,
-                  marginBottom: 24,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center'
-                }}
-              >
-                <button
-                  style={{
-                    position: 'absolute',
-                    top: 16,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: theme.accent2,
-                    border: 'none',
-                    color: '#fff',
-                    fontSize: 24,
-                    borderRadius: '50%',
-                    width: 38,
-                    height: 38,
-                    cursor: 'pointer',
-                    zIndex: 2,
-                    boxShadow: `0 2px 8px ${theme.accent2}99`
-                  }}
-                  onClick={handlePrevImage}
-                  aria-label="Previous"
-                >
-                  &#8593;
-                </button>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '40px',
+              padding: '40px'
+            }}>
+              {/* Image Gallery */}
+              <div style={{
+                position: 'relative',
+                height: '400px',
+              
+                overflow: 'hidden'
+              }}>
                 <img
                   src={modalHotel.images[modalImageIdx]}
                   alt=""
                   style={{
                     width: '100%',
                     height: '100%',
-                    objectFit: 'cover',
-                    borderRadius: 14,
-                    boxShadow: `0 2px 12px ${theme.accent2}22`,
-                    margin: '48px 0 16px 0',
-                    display: 'block'
+                    objectFit: 'cover'
                   }}
                 />
+                
                 <button
+                  onClick={handlePrevImage}
                   style={{
                     position: 'absolute',
-                    bottom: 16,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: theme.accent2,
-                    border: 'none',
-                    color: '#fff',
-                    fontSize: 24,
-                    borderRadius: '50%',
-                    width: 38,
-                    height: 38,
-                    cursor: 'pointer',
-                    zIndex: 2,
-                    boxShadow: `0 2px 8px ${theme.accent2}99`
-                  }}
-                  onClick={handleNextImage}
-                  aria-label="Next"
-                >
-                  &#8595;
-                </button>
-                <div
-                  style={{
-                    position: 'absolute',
-                    right: 16,
                     top: '50%',
+                    left: '20px',
                     transform: 'translateY(-50%)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 12
-                  }}
-                >
-                  {modalHotel.images.map((_, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        width: 14,
-                        height: 14,
-                        borderRadius: '50%',
-                        background: i === modalImageIdx ? theme.accent2 : '#ccc',
-                        display: 'inline-block',
-                        margin: '2px 0',
-                        border: i === modalImageIdx ? '2px solid #fff' : 'none'
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-              <p style={{
-                color: theme.accent2,
-                fontWeight: 'bold',
-                marginBottom: 18,
-                fontSize: 20
-              }}>
-                Price per night: KSH {modalHotel.price.toLocaleString()}
-              </p>
-              
-              {!showBooking && !bookingSuccess && (
-                <button
-                  style={{
-                    width: '100%',
-                    marginBottom: 20,
-                    fontSize: 20,
-                    padding: '16px 0',
-                    borderRadius: 8,
-                    background: theme.accent2,
+                    background: 'rgba(0,0,0,0.5)',
                     color: '#fff',
-                    fontWeight: 700,
                     border: 'none',
-                    boxShadow: `0 2px 8px ${theme.accent2}99`,
+                    width: '40px',
+                    height: '40px',
+                    
+                    fontSize: '1.2rem',
                     cursor: 'pointer',
-                    transition: 'background 0.3s'
-                  }}
-                  onClick={() => setShowBooking(true)}
-                >
-                  Book this Hotel
-                </button>
-              )}
-              {showBooking && !bookingSuccess && (
-                <form
-                  onSubmit={handleBookingSubmit}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 18,
-                    width: '100%',
-                    maxWidth: 520,
-                    alignItems: 'stretch'
-                  }}
-                >
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Your Name"
-                    value={bookingForm.name}
-                    onChange={handleBookingChange}
-                    required
-                    style={{
-                      width: '100%',
-                      fontSize: 18,
-                      padding: '12px 16px',
-                      borderRadius: 8,
-                      border: `1.5px solid ${theme.border}`,
-                      background: '#fff',
-                      color: theme.primary,
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                  <input
-                    type="tel"
-                    name="phone"
-                    placeholder="Mobile Number"
-                    value={bookingForm.phone}
-                    onChange={handleBookingChange}
-                    required
-                    style={{
-                      width: '100%',
-                      fontSize: 18,
-                      padding: '12px 16px',
-                      borderRadius: 8,
-                      border: `1.5px solid ${theme.border}`,
-                      background: '#fff',
-                      color: theme.primary,
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                  <input
-                    type="date"
-                    name="checkIn"
-                    placeholder="Check-in"
-                    value={bookingForm.checkIn}
-                    onChange={handleBookingChange}
-                    min={new Date().toISOString().split('T')[0]}
-                    required
-                    style={{
-                      width: '100%',
-                      fontSize: 18,
-                      padding: '12px 16px',
-                      borderRadius: 8,
-                      border: `1.5px solid ${theme.border}`,
-                      background: '#fff',
-                      color: theme.primary,
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                  <input
-                    type="date"
-                    name="checkOut"
-                    placeholder="Check-out"
-                    value={bookingForm.checkOut}
-                    onChange={handleBookingChange}
-                    min={bookingForm.checkIn || new Date().toISOString().split('T')[0]}
-                    required
-                    style={{
-                      width: '100%',
-                      fontSize: 18,
-                      padding: '12px 16px',
-                      borderRadius: 8,
-                      border: `1.5px solid ${theme.border}`,
-                      background: '#fff',
-                      color: theme.primary,
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                  <input
-                    type="number"
-                    name="guests"
-                    placeholder="Rooms"
-                    min={1}
-                    max={10}
-                    value={bookingForm.guests}
-                    onChange={handleBookingChange}
-                    required
-                    style={{
-                      width: '100%',
-                      fontSize: 18,
-                      padding: '12px 16px',
-                      borderRadius: 8,
-                      border: `1.5px solid ${theme.border}`,
-                      background: '#fff',
-                      color: theme.primary,
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                  {showBooking && (
-                    <p style={{
-                      color: theme.primary,
-                      fontWeight: 'bold',
-                      marginBottom: 18,
-                      fontSize: 20,
-                      background: "#f8f9fa",
-                      borderRadius: 8,
-                      padding: "8px 18px"
-                    }}>
-                      Total: KSH {totalPrice.toLocaleString()}
-                    </p>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={stkStatus === 'pending'}
-                    style={{
-                      width: '100%',
-                      fontSize: 20,
-                      padding: '16px 0',
-                      borderRadius: 8,
-                      marginTop: 6,
-                      background: theme.accent2,
-                      color: '#fff',
-                      fontWeight: 700,
-                      border: 'none',
-                      boxShadow: `0 2px 8px ${theme.accent2}99`,
-                      cursor: 'pointer',
-                      transition: 'background 0.3s'
-                    }}
-                  >
-                    {stkStatus === 'pending' ? 'Processing Payment...' : 'Confirm & Pay'}
-                  </button>
-                  {stkStatus === 'pending' && (
-                    <div style={{ color: theme.accent2, marginTop: 10, fontWeight: 700 }}>
-                      Please complete the payment on your phone...
-                    </div>
-                  )}
-                  {stkStatus === 'success' && (
-                    <div style={{ color: '#4bb543', marginTop: 10, fontWeight: 700 }}>
-                      Payment received!
-                    </div>
-                  )}
-                </form>
-              )}
-              {/* Require login/signup before confirming booking */}
-              {showAuth && (
-                <div
-                  style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(0,0,0,0.6)',
-                    zIndex: 2000,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <div style={{ background: '#fff', borderRadius: 12, padding: 24, minWidth: 320, boxShadow: '0 4px 32px #22223b33', position: 'relative' }}>
-                    <button
-                      onClick={() => setShowAuth(false)}
-                      style={{
-                        position: 'absolute',
-                        top: 10,
-                        right: 14,
-                        background: 'none',
-                        border: 'none',
-                        fontSize: 24,
-                        color: '#888',
-                        cursor: 'pointer'
-                      }}
-                      aria-label="Close"
-                    >
-                      &times;
-                    </button>
-                    <AuthPage onClose={() => setShowAuth(false)} onSuccess={handleAuthSuccess} />
-                  </div>
-                </div>
-              )}
-              {bookingSuccess && (
+                  ←
+                </button>
+                
+                <button
+                  onClick={handleNextImage}
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: '20px',
+                    transform: 'translateY(-50%)',
+                    background: 'rgba(0,0,0,0.5)',
+                    color: '#fff',
+                    border: 'none',
+                    width: '40px',
+                    height: '40px',
+                   
+                    fontSize: '1.2rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  →
+                </button>
+                
                 <div style={{
-                  textAlign: 'center',
-                  marginTop: 22,
-                  width: '100%',
-                  background: 'none'
+                  position: 'absolute',
+                  bottom: '20px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'flex',
+                  gap: '10px'
                 }}>
-                  <h4 style={{
-                    fontSize: 22,
-                    color: theme.accent2,
-                    fontWeight: 800
-                  }}>Booking Successful!</h4>
-                  <p style={{ fontSize: 18, color: theme.primary }}>
-                    Thank you for booking {modalHotel.name}.<br />
-                    A confirmation has been sent to your email.
-                  </p>
-                  <button
-                    onClick={() => setModalHotel(null)}
-                    style={{
-                      fontSize: 18,
-                      padding: '14px 0',
-                      width: '100%',
-                      borderRadius: 8,
-                      marginTop: 14,
-                      background: theme.accent2,
-                      color: '#fff',
-                      fontWeight: 700,
-                      border: 'none',
-                      boxShadow: `0 2px 8px ${theme.accent2}99`,
-                      cursor: 'pointer',
-                      transition: 'background 0.3s'
-                    }}
-                  >
-                    Close
-                  </button>
+                  {modalHotel.images.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setModalImageIdx(i)}
+                      style={{
+                        width: '10px',
+                        height: '10px',
+                       
+                        background: i === modalImageIdx ? theme.accent : 'rgba(255,255,255,0.5)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0
+                      }}
+                    />
+                  ))}
                 </div>
-              )}
+              </div>
+              
+              {/* Content */}
+              <div>
+                <h2 style={{
+                  fontSize: '2rem',
+                  fontWeight: 800,
+                  marginBottom: '16px',
+                  color: theme.primary,
+                  position: 'relative',
+                  display: 'inline-block'
+                }}>
+                  {modalHotel.name}
+                  <span style={{
+                    position: 'absolute',
+                    bottom: '-8px',
+                    left: 0,
+                    width: '60px',
+                    height: '4px',
+                    background: theme.accent,
+                   
+                  }}></span>
+                </h2>
+                
+                <p style={{
+                  color: theme.text,
+                  marginBottom: '24px',
+                  lineHeight: 1.6
+                }}>
+                  {modalHotel.description}
+                </p>
+                
+                <div style={{
+                  background: '#f8f8f8',
+                  
+                  padding: '20px',
+                  marginBottom: '24px'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '16px'
+                  }}>
+                    <span style={{ fontWeight: 600 }}>Price per night:</span>
+                    <span style={{
+                      fontWeight: 700,
+                      fontSize: '1.2rem',
+                      color: theme.accent
+                    }}>
+                      KSH {modalHotel.price.toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  {!showBooking && !bookingSuccess && (
+                    <button
+                      onClick={() => setShowBooking(true)}
+                      style={{
+                        width: '100%',
+                        padding: '16px',
+                        background: theme.primary,
+                        color: '#fff',
+                        border: 'none',
+                        
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        fontSize: '1rem'
+                      }}
+                    >
+                      RESERVE NOW
+                    </button>
+                  )}
+                </div>
+                
+                {/* Booking Form */}
+                {showBooking && !bookingSuccess && (
+                  <form onSubmit={handleBookingSubmit}>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '16px',
+                      marginBottom: '24px'
+                    }}>
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          marginBottom: '8px',
+                          fontWeight: 600,
+                          fontSize: '0.9rem'
+                        }}>Full Name</label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={bookingForm.name}
+                          onChange={handleBookingChange}
+                          required
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            
+                            border: `1px solid ${theme.border}`,
+                            fontSize: '1rem'
+                          }}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          marginBottom: '8px',
+                          fontWeight: 600,
+                          fontSize: '0.9rem'
+                        }}>Phone</label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={bookingForm.phone}
+                          onChange={handleBookingChange}
+                          required
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                           
+                            border: `1px solid ${theme.border}`,
+                            fontSize: '1rem'
+                          }}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          marginBottom: '8px',
+                          fontWeight: 600,
+                          fontSize: '0.9rem'
+                        }}>Check-in</label>
+                        <input
+                          type="date"
+                          name="checkIn"
+                          value={bookingForm.checkIn}
+                          onChange={handleBookingChange}
+                          required
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                           
+                            border: `1px solid ${theme.border}`,
+                            fontSize: '1rem'
+                          }}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          marginBottom: '8px',
+                          fontWeight: 600,
+                          fontSize: '0.9rem'
+                        }}>Check-out</label>
+                        <input
+                          type="date"
+                          name="checkOut"
+                          value={bookingForm.checkOut}
+                          onChange={handleBookingChange}
+                          required
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                          
+                            border: `1px solid ${theme.border}`,
+                            fontSize: '1rem'
+                          }}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          marginBottom: '8px',
+                          fontWeight: 600,
+                          fontSize: '0.9rem'
+                        }}>Guests</label>
+                        <input
+                          type="number"
+                          name="guests"
+                          min="1"
+                          max="10"
+                          value={bookingForm.guests}
+                          onChange={handleBookingChange}
+                          required
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            
+                            border: `1px solid ${theme.border}`,
+                            fontSize: '1rem'
+                          }}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div style={{
+                      background: '#f8f8f8',
+                     
+                      padding: '20px',
+                      marginBottom: '24px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        fontSize: '1.2rem',
+                        fontWeight: 700,
+                        marginBottom: '12px'
+                      }}>
+                        TOTAL: KSH {totalPrice.toLocaleString()}
+                      </div>
+                      
+                      <button
+                        type="submit"
+                        disabled={stkStatus === 'pending'}
+                        style={{
+                          width: '100%',
+                          padding: '16px',
+                          background: stkStatus === 'pending' ? '#ccc' : theme.accent,
+                          color: '#fff',
+                          border: 'none',
+                         
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          fontSize: '1rem'
+                        }}
+                      >
+                        {stkStatus === 'pending' ? 'PROCESSING PAYMENT...' : 'CONFIRM & PAY'}
+                      </button>
+                      
+                      {stkStatus === 'pending' && (
+                        <div style={{
+                          marginTop: '16px',
+                          color: theme.accent,
+                          fontWeight: 600
+                        }}>
+                          Please check your phone to complete payment
+                        </div>
+                      )}
+                    </div>
+                  </form>
+                )}
+                
+                {/* Success Message */}
+                {bookingSuccess && (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '40px 20px'
+                  }}>
+                    <div style={{
+                      fontSize: '3rem',
+                      marginBottom: '20px',
+                      color: '#4CAF50'
+                    }}>
+                      ✓
+                    </div>
+                    <h3 style={{
+                      fontSize: '1.8rem',
+                      fontWeight: 700,
+                      marginBottom: '16px',
+                      color: theme.primary
+                    }}>
+                      Booking Confirmed!
+                    </h3>
+                    <p style={{
+                      marginBottom: '24px',
+                      lineHeight: 1.6
+                    }}>
+                      Your reservation at {modalHotel.name} has been confirmed. 
+                      A receipt has been sent to your email.
+                    </p>
+                    <button
+                      onClick={() => setModalHotel(null)}
+                      style={{
+                        padding: '16px 32px',
+                        background: theme.primary,
+                        color: '#fff',
+                        border: 'none',
+                       
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        fontSize: '1rem'
+                      }}
+                    >
+                      CLOSE
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+
+      {/* Auth Modal */}
+      {showAuth && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.8)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            style={{
+              background: theme.card,
+              
+              width: '100%',
+              maxWidth: '400px',
+              padding: '40px',
+              position: 'relative',
+              boxShadow: `0 0 0 2px ${theme.accent}`
+            }}
+          >
+            <button
+              onClick={() => setShowAuth(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: theme.text
+              }}
+            >
+              ×
+            </button>
+            <AuthPage onClose={() => setShowAuth(false)} onSuccess={handleAuthSuccess} />
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Global Styles */}
       <style>
         {`
-          html, body, #root {
-            max-width: 100vw !important;
-            overflow-x: hidden !important;
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
           }
-          @keyframes fadeInModal {
-            from { opacity: 0; transform: scale(0.95);}
-            to { opacity: 1; transform: scale(1);}
+          body {
+            overflow-x: hidden;
+          }
+          button {
+            transition: all 0.3s ease;
+          }
+          button:hover {
+            opacity: 0.9;
+          }
+          input, textarea {
+            transition: all 0.3s ease;
+          }
+          input:focus, textarea:focus {
+            outline: none;
+            border-color: ${theme.accent} !important;
+            box-shadow: 0 0 0 2px ${theme.accent}33;
           }
         `}
       </style>

@@ -1,161 +1,217 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React, { useState } from 'react';
+
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const AuthPage = ({ onClose, setUser }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    name: ""
+    email: '',
+    password: '',
+    name: ''
   });
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Simulate authentication
-    if (isLogin) {
-      // Login logic
-      const user = {
-        id: "user_" + Math.random().toString(36).substr(2, 9),
-        email: formData.email,
-        name: "Test User" // In a real app, this would come from your backend
-      };
-      localStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
-      onClose();
-    } else {
-      // Signup logic
-      const user = {
-        id: "user_" + Math.random().toString(36).substr(2, 9),
-        email: formData.email,
-        name: formData.name
-      };
-      localStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
-      onClose();
+    try {
+      // Simulate API call
+      const response = await AuthAPI(isLogin, formData);
+      
+      if (response.success) {
+        setUser(response.user);
+        onClose();
+        toast.success(`Welcome ${response.user.name}`);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error('An error occurred during authentication');
     }
   };
 
+  //  authentication function
+  const AuthAPI = (isLogin, data) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (isLogin) {
+          // Login logic
+          if (data.email === 'user@example.com' && data.password === 'password') {
+            resolve({
+              success: true,
+              user: {
+                name: 'Demo User',
+                email: data.email,
+                token: 'jwt-token'
+              }
+            });
+          } else {
+            resolve({
+              success: false,
+              message: 'Invalid credentials'
+            });
+          }
+        } else {
+          // Signup logic
+          if (data.email && data.password && data.name) {
+            resolve({
+              success: true,
+              user: {
+                name: data.name,
+                email: data.email,
+                token: 'jwt-token'
+              }
+            });
+          } else {
+            resolve({
+              success: false,
+              message: 'Please fill all fields'
+            });
+          }
+        }
+      }, 1000);
+    });
+  };
+
   return (
-    <div style={{ background: "#1a1a1a", padding: "2rem", borderRadius: "8px", maxWidth: "400px", width: "100%" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
-        <h2 style={{ color: "white" }}>{isLogin ? "Login" : "Sign Up"}</h2>
-        <button 
-          onClick={onClose}
-          style={{ 
-            background: "transparent", 
-            border: "none", 
-            color: "white", 
-            fontSize: "1.5rem",
-            cursor: "pointer" 
-          }}
-        >
-          ×
-        </button>
-      </div>
+    <div style={{
+      background: 'white',
+      borderRadius: '8px',
+      padding: '2rem',
+      width: '100%',
+      maxWidth: '400px',
+      margin: '0 auto',
+      position: 'relative' 
+    }}>
+      {/* Close Button */}
+      <button
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          top: '1rem',
+          right: '1rem',
+          background: 'transparent',
+          border: 'none',
+          fontSize: '1.5rem',
+          cursor: 'pointer',
+          color: '#666',
+          padding: '0.25rem',
+          borderRadius: '50%',
+          width: '32px',
+          height: '32px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.2s ease',
+          ':hover': {
+            background: '#f0f0f0',
+            color: '#333'
+          }
+        }}
+        aria-label="Close authentication modal"
+      >
+        &times;
+      </button>
+      
+      <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+        {isLogin ? 'Login' : 'Sign Up'}
+      </h2>
       
       <form onSubmit={handleSubmit}>
         {!isLogin && (
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", color: "#aaa", marginBottom: "0.5rem" }}>Name</label>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Name</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              required
               style={{
-                width: "100%",
-                padding: "0.75rem",
-                background: "#333",
-                border: "none",
-                borderRadius: "4px",
-                color: "white"
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #ddd',
+                borderRadius: '4px'
               }}
+              required
             />
           </div>
         )}
         
-        <div style={{ marginBottom: "1rem" }}>
-          <label style={{ display: "block", color: "#aaa", marginBottom: "0.5rem" }}>Email</label>
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem' }}>Email</label>
           <input
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            required
             style={{
-              width: "100%",
-              padding: "0.75rem",
-              background: "#333",
-              border: "none",
-              borderRadius: "4px",
-              color: "white"
+              width: '100%',
+              padding: '0.75rem',
+              border: '1px solid #ddd',
+              borderRadius: '4px'
             }}
+            required
           />
         </div>
         
-        <div style={{ marginBottom: "2rem" }}>
-          <label style={{ display: "block", color: "#aaa", marginBottom: "0.5rem" }}>Password</label>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem' }}>Password</label>
           <input
             type="password"
             name="password"
             value={formData.password}
             onChange={handleChange}
-            required
             style={{
-              width: "100%",
-              padding: "0.75rem",
-              background: "#333",
-              border: "none",
-              borderRadius: "4px",
-              color: "white"
+              width: '100%',
+              padding: '0.75rem',
+              border: '1px solid #ddd',
+              borderRadius: '4px'
             }}
+            required
+            minLength="6"
           />
         </div>
         
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+        <button
           type="submit"
           style={{
-            width: "100%",
-            padding: "0.75rem",
-            background: "linear-gradient(90deg,#4ea8de,#4361ee)",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontWeight: "bold",
-            marginBottom: "1rem"
+            width: '100%',
+            padding: '0.75rem',
+            background: 'linear-gradient(90deg,#4ea8de,#4361ee)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            marginBottom: '1rem'
           }}
         >
-          {isLogin ? "Login" : "Sign Up"}
-        </motion.button>
-      </form>
-      
-      <p style={{ color: "#aaa", textAlign: "center" }}>
-        {isLogin ? "Don't have an account? " : "Already have an account? "}
-        <button
-          onClick={() => setIsLogin(!isLogin)}
-          style={{
-            background: "transparent",
-            border: "none",
-            color: "#4ea8de",
-            cursor: "pointer",
-            textDecoration: "underline"
-          }}
-        >
-          {isLogin ? "Sign up" : "Login"}
+          {isLogin ? 'Login' : 'Sign Up'}
         </button>
-      </p>
+        
+        <div style={{ textAlign: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setIsLogin(!isLogin)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#4361ee',
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+          >
+            {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Login'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

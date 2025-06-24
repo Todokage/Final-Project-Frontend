@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Import your images
+
 import dianiImage from './images/diani.jpg';
 import tokyoImage from './images/tokyo.jpg';
 import monacoImage from './images/monaco.jpg';
@@ -15,7 +15,6 @@ import parisImage from './images/paris.jpg';
 import berlinImage from './images/berlin.jpg';
 
 const LandingPage = () => {
-  // Sections data moved inside the component
   const sections = [
     { 
       id: 'Diani,KENYA', 
@@ -183,7 +182,7 @@ const LandingPage = () => {
   const variants = {
     enter: (direction) => ({
       opacity: 0,
-      x: direction > 0 ? 1000 : -1000,
+      x: direction > 0 ? '100%' : '-100%',
     }),
     center: {
       zIndex: 1,
@@ -193,7 +192,7 @@ const LandingPage = () => {
     exit: (direction) => ({
       zIndex: 0,
       opacity: 0,
-      x: direction < 0 ? 1000 : -1000,
+      x: direction < 0 ? '100%' : '-100%',
     }),
   };
 
@@ -205,8 +204,7 @@ const LandingPage = () => {
   return (
     <div
       style={{
-        minHeight: '100vh',
-        width: '100vw',
+        width: '100%',
         height: '100vh',
         position: 'relative',
         overflow: 'hidden',
@@ -239,8 +237,8 @@ const LandingPage = () => {
             position: 'absolute',
             top: 0,
             left: 0,
-            right: 0,
-            bottom: 0,
+            width: '100%',
+            height: '100%',
             backgroundImage: `url(${sections[currentSlide].image})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
@@ -257,8 +255,8 @@ const LandingPage = () => {
               position: 'absolute',
               top: 0,
               left: 0,
-              right: 0,
-              bottom: 0,
+              width: '100%',
+              height: '100%',
               backgroundColor: sections[currentSlide].filter,
               zIndex: 1
             }}
@@ -270,14 +268,16 @@ const LandingPage = () => {
         style={{
           position: 'relative',
           zIndex: 2,
-          minHeight: '100vh',
-          width: '100vw',
+          width: '100%',
           height: '100vh',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: 'Inter, sans-serif'
+          fontFamily: 'Inter, sans-serif',
+          overflow: 'hidden',
+          padding: '0 20px',
+          boxSizing: 'border-box'
         }}
       >
         <motion.div
@@ -288,9 +288,10 @@ const LandingPage = () => {
           transition={transitionConfig}
           style={{
             textAlign: 'center',
-            padding: '40px',
+            padding: '20px',
             margin: '0 auto',
             maxWidth: '600px',
+            width: '100%',
             position: 'relative',
             zIndex: 2,
           }}
@@ -303,7 +304,7 @@ const LandingPage = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
             style={{
-              fontSize: '4rem',
+              fontSize: 'clamp(2rem, 8vw, 4rem)',
               marginBottom: '1rem',
               color: '#fff',
               fontWeight: 700,
@@ -334,6 +335,7 @@ const LandingPage = () => {
               cursor: 'pointer',
               textTransform: 'uppercase',
               letterSpacing: '2px',
+              maxWidth: '100%'
             }}
           >
             Explore
@@ -351,7 +353,9 @@ const LandingPage = () => {
             position: 'absolute',
             bottom: '40px',
             left: '50%',
-            transform: 'translateX(-50%)'
+            transform: 'translateX(-50%)',
+            width: 'auto',
+            maxWidth: '100%'
           }}
         >
           {sections.map((_, i) => (
@@ -389,13 +393,15 @@ const LandingPage = () => {
               position: 'fixed',
               top: 0,
               left: 0,
-              right: 0,
-              bottom: 0,
+              width: '100%',
+              height: '100%',
               backgroundColor: 'rgba(0,0,0,0.7)',
               zIndex: 1000,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              padding: '20px',
+              boxSizing: 'border-box'
             }}
             onClick={() => setShowModal(false)}
           >
@@ -409,7 +415,7 @@ const LandingPage = () => {
                 borderRadius: '8px',
                 padding: '2rem',
                 maxWidth: '500px',
-                width: '90%',
+                width: '100%',
                 position: 'relative',
               }}
               onClick={(e) => e.stopPropagation()}

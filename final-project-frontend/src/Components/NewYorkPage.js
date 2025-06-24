@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-// NYC-themed color scheme (urban with classic accents)
+// NYC-themed color scheme 
 const theme = {
   primary: "#0038a8", // NYC Taxi Blue
   secondary: "#ff6319", // NYC Subway Orange
@@ -153,7 +153,7 @@ const NewYorkPage = () => {
     <div
       style={{
         minHeight: "100vh",
-        width: "100vw",
+        width: "100%",
         background: theme.bg,
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
         overflowX: "hidden",
@@ -171,7 +171,7 @@ const NewYorkPage = () => {
           justifyContent: "center",
           position: "relative",
           overflow: "hidden",
-          clipPath: "polygon(0 0, 100% 0, 100% 70%, 0 100%)",
+          clipPath: "polygon(0 0, 100% 0, 100% 80%, 0 100%)",
           marginBottom: "-10vh",
         }}
       >

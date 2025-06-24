@@ -26,8 +26,8 @@ const hotels = [
       "Beachfront luxury with stunning ocean views and Swahili-inspired architecture",
     price: 180 * USD_TO_KES,
     images: [
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1563911302283-d2bc129e7570?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+      "https://images.unsplash.com/photo-1587330979470-3595ac045ab0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
     ],
     tags: ["Beachfront", "Luxury", "Spa"],
   },
@@ -38,8 +38,8 @@ const hotels = [
       "Family-friendly resort with water sports and tropical gardens",
     price: 150 * USD_TO_KES,
     images: [
-      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
     ],
     tags: ["Family", "All-Inclusive", "Activities"],
   },
@@ -50,7 +50,7 @@ const slides = [
     id: 1,
     title: "Diani Beach",
     image:
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1563911302283-d2bc129e7570?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
     description:
       "Pristine white sands and turquoise waters of Kenya's premier beach destination",
   },
@@ -58,7 +58,7 @@ const slides = [
     id: 2,
     title: "Colobus Conservation",
     image:
-      "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587330979470-3595ac045ab0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
     description:
       "See the endangered Angolan colobus monkeys in their natural habitat",
   },
@@ -154,7 +154,7 @@ const DianiPage = () => {
     <div
       style={{
         minHeight: "100vh",
-        width: "100vw",
+        width: "100%",
         background: theme.bg,
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
         overflowX: "hidden",
@@ -172,7 +172,7 @@ const DianiPage = () => {
           justifyContent: "center",
           position: "relative",
           overflow: "hidden",
-          clipPath: "polygon(0 0, 100% 0, 100% 70%, 0 100%)",
+          clipPath: "polygon(0 0, 100% 0, 100% 80%, 0 100%)",
           marginBottom: "-10vh",
         }}
       >

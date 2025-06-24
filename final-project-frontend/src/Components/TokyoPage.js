@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import AuthPage from "./AuthPage";
 import { motion } from "framer-motion";
 
-// Tokyo-themed color scheme (modern with traditional accents)
+// Tokyo themed color scheme 
 const theme = {
   primary: "#2a2a2a", // Dark gray
   secondary: "#5a5a5a", // Medium gray
@@ -17,7 +16,7 @@ const theme = {
   lightText: "#888", // Light text
 };
 
-const JPY_TO_KES = 1.2; // Japanese Yen to Kenyan Shillings conversion
+const JPY_TO_KES = 1.2; //  Yen to KSH conversion
 
 const hotels = [
   {
@@ -80,8 +79,6 @@ const TokyoPage = () => {
   });
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [stkStatus, setStkStatus] = useState(null);
-  const [showAuth, setShowAuth] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navbarRef = useRef(null);
   const [showHomeBtn, setShowHomeBtn] = useState(false);
 
@@ -149,23 +146,14 @@ const TokyoPage = () => {
 
   const handleBookingSubmit = (e) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      setShowAuth(true);
-      return;
-    }
     simulateSTKPush();
-  };
-
-  const handleAuthSuccess = () => {
-    setIsAuthenticated(true);
-    setShowAuth(false);
   };
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        width: "100vw",
+        width: "100%",
         background: theme.bg,
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
         overflowX: "hidden",
@@ -183,7 +171,7 @@ const TokyoPage = () => {
           justifyContent: "center",
           position: "relative",
           overflow: "hidden",
-          clipPath: "polygon(0 0, 100% 0, 100% 70%, 0 100%)",
+          clipPath: "polygon(0 0, 100% 0, 100% 80%, 0 100%)",
           marginBottom: "-10vh",
         }}
       >
@@ -1054,61 +1042,6 @@ const TokyoPage = () => {
                 )}
               </div>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* Auth Modal */}
-      {showAuth && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0,0,0,0.8)",
-            zIndex: 2000,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            style={{
-              background: theme.card,
-              width: "100%",
-              maxWidth: "400px",
-              padding: "40px",
-              position: "relative",
-              boxShadow: `0 0 0 2px ${theme.accent}`,
-            }}
-          >
-            <button
-              onClick={() => setShowAuth(false)}
-              style={{
-                position: "absolute",
-                top: "16px",
-                right: "16px",
-                background: "none",
-                border: "none",
-                fontSize: "1.5rem",
-                cursor: "pointer",
-                color: theme.text,
-              }}
-              aria-label="Close auth modal"
-            >
-              ×
-            </button>
-            <AuthPage
-              onClose={() => setShowAuth(false)}
-              onSuccess={handleAuthSuccess}
-            />
           </motion.div>
         </motion.div>
       )}

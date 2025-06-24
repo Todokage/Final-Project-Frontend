@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-// London-inspired color scheme (Regal British colors)
+// London color theme
 const theme = {
   primary: "#1a365d", // Royal Navy Blue
   secondary: "#b22234", // British Red
@@ -152,7 +152,7 @@ const LondonPage = () => {
     <div
       style={{
         minHeight: "100vh",
-        width: "100vw",
+        width: "100%",
         background: theme.bg,
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
         overflowX: "hidden",
@@ -170,7 +170,7 @@ const LondonPage = () => {
           justifyContent: "center",
           position: "relative",
           overflow: "hidden",
-          clipPath: "polygon(0 0, 100% 0, 100% 70%, 0 100%)",
+          clipPath: "polygon(0 0, 100% 0, 100% 80%, 0 100%)",
           marginBottom: "-10vh",
         }}
       >

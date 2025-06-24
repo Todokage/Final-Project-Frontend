@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AuthPage from "./AuthPage";
 import { motion } from "framer-motion";
 
-// Purple-themed color scheme
+// Paris-themed color scheme
 const theme = {
   primary: "#4b2e83", // Deep purple
   secondary: "#b399d4", // Light purple
@@ -17,7 +17,7 @@ const theme = {
   lightText: "#7e57c2", // Medium purple
 };
 
-const EUR_TO_KES = 150; // Euro to Kenyan Shillings conversion
+const EUR_TO_KES = 150; // Euro to KSH conversion
 
 const hotels = [
   {
@@ -164,7 +164,7 @@ const ParisPage = () => {
     <div
       style={{
         minHeight: "100vh",
-        width: "100vw",
+        width: "100%",
         background: theme.bg,
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
         overflowX: "hidden",
@@ -182,7 +182,7 @@ const ParisPage = () => {
           justifyContent: "center",
           position: "relative",
           overflow: "hidden",
-          clipPath: "polygon(0 0, 100% 0, 100% 70%, 0 100%)",
+          clipPath: "polygon(0 0, 100% 0, 100% 80%, 0 100%)",
           marginBottom: "-10vh",
         }}
       >

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-// Monaco-themed color scheme (luxurious with Mediterranean accents)
+// Monaco-themed color scheme 
 const theme = {
   primary: "#1a3a6e", // Deep blue
   secondary: "#c0a080", // Gold/sand
@@ -16,7 +16,7 @@ const theme = {
   lightText: "#888", // Light text
 };
 
-const EUR_TO_KES = 150; // Euro to Kenyan Shillings conversion
+const EUR_TO_KES = 150; // Euro to KSH conversion
 
 const hotels = [
   {
@@ -154,7 +154,7 @@ const MonacoPage = () => {
     <div
       style={{
         minHeight: "100vh",
-        width: "100vw",
+        width: "100%",
         background: theme.bg,
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
         overflowX: "hidden",
@@ -172,7 +172,7 @@ const MonacoPage = () => {
           justifyContent: "center",
           position: "relative",
           overflow: "hidden",
-          clipPath: "polygon(0 0, 100% 0, 100% 70%, 0 100%)",
+          clipPath: "polygon(0 0, 100% 0, 100% 80%, 0 100%)",
           marginBottom: "-10vh",
         }}
       >
@@ -1022,7 +1022,7 @@ const MonacoPage = () => {
                       }}
                     >
                       Your reservation at {modalHotel.name} has been confirmed.
-                      A receipt has been sent to your email.
+                      A receipt has been sent to {bookingForm.email}
                     </p>
                     <button
                       onClick={() => setModalHotel(null)}

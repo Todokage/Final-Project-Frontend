@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-// Dubai-themed color scheme (modern luxury with desert accents)
+// Dubai-themed color theme
 const theme = {
   primary: "#0d4b6e", // Deep blue
   secondary: "#d4a762", // Sand gold
@@ -16,7 +16,7 @@ const theme = {
   lightText: "#888", // Light text
 };
 
-const AED_TO_KES = 30; // UAE Dirham to Kenyan Shillings conversion
+const AED_TO_KES = 30; // UAE  to KSH conversion
 
 const hotels = [
   {
@@ -152,7 +152,7 @@ const DubaiPage = () => {
     <div
       style={{
         minHeight: "100vh",
-        width: "100vw",
+        width: "100%",
         background: theme.bg,
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
         overflowX: "hidden",
@@ -170,7 +170,7 @@ const DubaiPage = () => {
           justifyContent: "center",
           position: "relative",
           overflow: "hidden",
-          clipPath: "polygon(0 0, 100% 0, 100% 70%, 0 100%)",
+          clipPath: "polygon(0 0, 100% 0, 100% 80%, 0 100%)",
           marginBottom: "-10vh",
         }}
       >

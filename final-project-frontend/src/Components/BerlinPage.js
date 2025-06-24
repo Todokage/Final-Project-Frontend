@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import AuthPage from './AuthPage';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 // Modern color theme with edgy accents
 const theme = {
@@ -14,7 +13,7 @@ const theme = {
   border: "#e0e0e0",
   shadow: "rgba(0,0,0,0.15)",
   text: "#333",
-  lightText: "#888"
+  lightText: "#888",
 };
 
 const EUR_TO_KES = 140;
@@ -22,13 +21,14 @@ const EUR_TO_KES = 140;
 const hotels = [
   {
     name: "Hotel Adlon Kempinski",
-    description: "Luxury hotel at Brandenburg Gate with classic Berlin elegance",
+    description:
+      "Luxury hotel at Brandenburg Gate with classic Berlin elegance",
     price: 25 * EUR_TO_KES,
     images: [
       "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=800&q=80"
+      "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["Luxury", "Historic", "Central"]
+    tags: ["Luxury", "Historic", "Central"],
   },
   {
     name: "25hours Hotel Bikini Berlin",
@@ -36,23 +36,26 @@ const hotels = [
     price: 20 * EUR_TO_KES,
     images: [
       "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["Hip", "Creative", "Vibrant"]
-  }
+    tags: ["Hip", "Creative", "Vibrant"],
+  },
 ];
 
 const slides = [
   {
-    title: 'Brandenburg Gate',
-    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
-    description: 'Iconic neoclassical monument of Berlin'
+    title: "Brandenburg Gate",
+    image:
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
+    description: "Iconic neoclassical monument of Berlin",
   },
   {
-    title: 'Berlin Wall',
-    image: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80',
-    description: 'East Side Gallery - the longest open-air gallery in the world'
-  }
+    title: "Berlin Wall",
+    image:
+      "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80",
+    description:
+      "East Side Gallery - the longest open-air gallery in the world",
+  },
 ];
 
 const BerlinPage = () => {
@@ -62,16 +65,15 @@ const BerlinPage = () => {
   const [modalImageIdx, setModalImageIdx] = useState(0);
   const [showBooking, setShowBooking] = useState(false);
   const [bookingForm, setBookingForm] = useState({
-    name: '',
-    checkIn: '',
-    checkOut: '',
+    name: "",
+    email: "",
+    checkIn: "",
+    checkOut: "",
     guests: 1,
-    phone: ''
+    phone: "",
   });
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [stkStatus, setStkStatus] = useState(null);
-  const [showAuth, setShowAuth] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navbarRef = useRef(null);
   const [showHomeBtn, setShowHomeBtn] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -84,9 +86,9 @@ const BerlinPage = () => {
       setShowHomeBtn(navbarBottom < 0);
       setIsScrolled(window.scrollY > 50);
     };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Image carousel effects
@@ -94,7 +96,7 @@ const BerlinPage = () => {
     let imgInterval;
     if (modalHotel) {
       imgInterval = setInterval(() => {
-        setModalImageIdx(prev => (prev + 1) % modalHotel.images.length);
+        setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
       }, 3500);
     }
     return () => clearInterval(imgInterval);
@@ -103,97 +105,103 @@ const BerlinPage = () => {
   // Slide rotation
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % slides.length);
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 8000);
     return () => clearInterval(interval);
   }, []);
 
   const handlePrevImage = () => {
-    setModalImageIdx(prev => (prev - 1 + modalHotel.images.length) % modalHotel.images.length);
+    setModalImageIdx(
+      (prev) => (prev - 1 + modalHotel.images.length) % modalHotel.images.length
+    );
   };
 
   const handleNextImage = () => {
-    setModalImageIdx(prev => (prev + 1) % modalHotel.images.length);
+    setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
   };
 
   const handleBookingChange = (e) => {
     const { name, value } = e.target;
-    setBookingForm(prev => ({ ...prev, [name]: value }));
+    setBookingForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const totalPrice = modalHotel ? modalHotel.price * (parseInt(bookingForm.guests, 10) || 1) : 0;
+  const totalPrice = modalHotel
+    ? modalHotel.price * (parseInt(bookingForm.guests, 10) || 1)
+    : 0;
 
   const simulateSTKPush = () => {
-    setStkStatus('pending');
+    setStkStatus("pending");
     setTimeout(() => {
-      setStkStatus('success');
+      setStkStatus("success");
       setBookingSuccess(true);
     }, 2000);
   };
 
   const handleBookingSubmit = (e) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      setShowAuth(true);
-      return;
-    }
     simulateSTKPush();
   };
 
-  const handleAuthSuccess = () => {
-    setIsAuthenticated(true);
-    setShowAuth(false);
-  };
-
   return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100vw',
-      background: theme.bg,
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-      overflowX: "hidden"
-    }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        width: "100vw",
+        background: theme.bg,
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        overflowX: "hidden",
+      }}
+    >
       {/* Edgy Hero Section with Diagonal Cut */}
-      <div ref={navbarRef} style={{
-        width: '100%',
-        minHeight: '80vh',
-        background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-        clipPath: 'polygon(0 0, 100% 0, 100% 70%, 0 100%)',
-        marginBottom: '-10vh'
-      }}>
-        <img src={slides[currentSlide].image} alt={slides[currentSlide].title} style={{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          opacity: 0.4,
-          filter: 'grayscale(30%) contrast(120%)'
-        }} />
-        
-        <div style={{
-          position: 'relative',
-          zIndex: 2,
-          textAlign: 'center',
-          padding: '0 20px',
-          maxWidth: '1200px'
-        }}>
-          <motion.h1 
+      <div
+        ref={navbarRef}
+        style={{
+          width: "100%",
+          minHeight: "80vh",
+          background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          overflow: "hidden",
+          clipPath: "polygon(0 0, 100% 0, 100% 70%, 0 100%)",
+          marginBottom: "-10vh",
+        }}
+      >
+        <img
+          src={slides[currentSlide].image}
+          alt={slides[currentSlide].title}
+          style={{
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            opacity: 0.4,
+            filter: "grayscale(30%) contrast(120%)",
+          }}
+        />
+
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            textAlign: "center",
+            padding: "0 20px",
+            maxWidth: "1200px",
+          }}
+        >
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             style={{
-              fontSize: 'clamp(2.5rem, 8vw, 5rem)',
+              fontSize: "clamp(2.5rem, 8vw, 5rem)",
               fontWeight: 900,
               color: "#fff",
-              letterSpacing: '-0.03em',
-              marginBottom: '1rem',
-              textTransform: 'uppercase',
-              textShadow: '3px 3px 0 rgba(0,0,0,0.2)'
+              letterSpacing: "-0.03em",
+              marginBottom: "1rem",
+              textTransform: "uppercase",
+              textShadow: "3px 3px 0 rgba(0,0,0,0.2)",
             }}
           >
             BERLIN
@@ -203,11 +211,11 @@ const BerlinPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             style={{
-              fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
+              fontSize: "clamp(1.5rem, 4vw, 2.5rem)",
               fontWeight: 700,
-              marginBottom: '1.5rem',
+              marginBottom: "1.5rem",
               color: "#fff",
-              letterSpacing: '0.1em'
+              letterSpacing: "0.1em",
             }}
           >
             {slides[currentSlide].title}
@@ -217,12 +225,12 @@ const BerlinPage = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.4 }}
             style={{
-              fontSize: '1.2rem',
+              fontSize: "1.2rem",
               color: "#fff",
-              maxWidth: '600px',
-              margin: '0 auto',
+              maxWidth: "600px",
+              margin: "0 auto",
               lineHeight: 1.6,
-              textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+              textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
             }}
           >
             {slides[currentSlide].description}
@@ -230,28 +238,30 @@ const BerlinPage = () => {
         </div>
 
         {/* Slide Indicators */}
-        <div style={{
-          position: 'absolute',
-          bottom: '15%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          gap: '12px',
-          zIndex: 10
-        }}>
+        <div
+          style={{
+            position: "absolute",
+            bottom: "15%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            gap: "12px",
+            zIndex: 10,
+          }}
+        >
           {slides.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentSlide(idx)}
               style={{
-                width: '12px',
-                height: '12px',
-                
-                background: idx === currentSlide ? '#fff' : 'rgba(255,255,255,0.3)',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                transform: idx === currentSlide ? 'scale(1.3)' : 'scale(1)'
+                width: "12px",
+                height: "12px",
+                background:
+                  idx === currentSlide ? "#fff" : "rgba(255,255,255,0.3)",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                transform: idx === currentSlide ? "scale(1.3)" : "scale(1)",
               }}
               aria-label={`Go to slide ${idx + 1}`}
             />
@@ -264,75 +274,79 @@ const BerlinPage = () => {
         <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          onClick={() => navigate('/')}
+          onClick={() => navigate("/")}
           style={{
-            position: 'fixed',
-            top: '24px',
-            left: '24px',
+            position: "fixed",
+            top: "24px",
+            left: "24px",
             background: theme.accent,
-            color: '#fff',
-            border: 'none',
-            
-            padding: '12px 24px',
-            fontSize: '1rem',
+            color: "#fff",
+            border: "none",
+            padding: "12px 24px",
+            fontSize: "1rem",
             fontWeight: 700,
-            cursor: 'pointer',
+            cursor: "pointer",
             zIndex: 100,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
           }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <span style={{ fontSize: '1.2rem' }}>←</span> HOME
+          <span style={{ fontSize: "1.2rem" }}>←</span> HOME
         </motion.button>
       )}
 
       {/* Modern Hotel Cards Section */}
-      <section style={{
-        width: '100%',
-        maxWidth: '1400px',
-        margin: '80px auto 120px',
-        padding: '0 20px',
-        position: 'relative'
-      }}>
-        <motion.h2 
+      <section
+        style={{
+          width: "100%",
+          maxWidth: "1400px",
+          margin: "80px auto 120px",
+          padding: "0 20px",
+          position: "relative",
+        }}
+      >
+        <motion.h2
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           style={{
             color: theme.primary,
-            textAlign: 'center',
-            marginBottom: '60px',
-            fontSize: '2.5rem',
+            textAlign: "center",
+            marginBottom: "60px",
+            fontSize: "2.5rem",
             fontWeight: 800,
-            letterSpacing: '-0.03em',
-            position: 'relative',
-            display: 'inline-block',
-            left: '50%',
-            transform: 'translateX(-50%)'
+            letterSpacing: "-0.03em",
+            position: "relative",
+            display: "inline-block",
+            left: "50%",
+            transform: "translateX(-50%)",
           }}
         >
           Hotels
-          <span style={{
-            position: 'absolute',
-            bottom: '-10px',
-            left: '0',
-            width: '100%',
-            height: '4px',
-            background: `linear-gradient(90deg, ${theme.accent}, ${theme.accent2})`,
-            
-          }}></span>
+          <span
+            style={{
+              position: "absolute",
+              bottom: "-10px",
+              left: "0",
+              width: "100%",
+              height: "4px",
+              background: `linear-gradient(90deg, ${theme.accent}, ${theme.accent2})`,
+            }}
+          ></span>
         </motion.h2>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-          gap: '40px',
-          padding: '0 20px'
-        }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+            gap: "40px",
+            padding: "0 20px",
+          }}
+        >
           {hotels.map((hotel) => (
             <motion.div
               key={hotel.name}
@@ -342,102 +356,123 @@ const BerlinPage = () => {
               whileHover={{ y: -5 }}
               style={{
                 background: theme.card,
-               
-                overflow: 'hidden',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                transition: 'all 0.3s ease',
+                overflow: "hidden",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+                transition: "all 0.3s ease",
                 border: `1px solid ${theme.border}`,
-                display: 'flex',
-                flexDirection: 'column'
+                display: "flex",
+                flexDirection: "column",
               }}
             >
-              <div style={{
-                height: '220px',
-                position: 'relative',
-                overflow: 'hidden'
-              }}>
+              <div
+                style={{
+                  height: "220px",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
                 <img
                   src={hotel.images[0]}
                   alt={hotel.name}
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    transition: 'transform 0.5s ease'
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    transition: "transform 0.5s ease",
                   }}
                 />
-                <div style={{
-                  position: 'absolute',
-                  bottom: '0',
-                  left: '0',
-                  right: '0',
-                  padding: '12px 20px',
-                  background: 'linear-gradient(transparent, rgba(0,0,0,0.7))'
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    flexWrap: 'wrap'
-                  }}>
-                    {hotel.tags.map(tag => (
-                      <span key={tag} style={{
-                        background: theme.accent,
-                        color: '#fff',
-                        padding: '4px 12px',
-                        
-                        fontSize: '0.8rem',
-                        fontWeight: 600
-                      }}>
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "0",
+                    left: "0",
+                    right: "0",
+                    padding: "12px 20px",
+                    background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {hotel.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        style={{
+                          background: theme.accent,
+                          color: "#fff",
+                          padding: "4px 12px",
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                        }}
+                      >
                         {tag}
                       </span>
                     ))}
                   </div>
                 </div>
               </div>
-              
-              <div style={{
-                padding: '24px',
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column'
-              }}>
-                <h3 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: 700,
-                  marginBottom: '12px',
-                  color: theme.primary
-                }}>
+
+              <div
+                style={{
+                  padding: "24px",
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: "1.5rem",
+                    fontWeight: 700,
+                    marginBottom: "12px",
+                    color: theme.primary,
+                  }}
+                >
                   {hotel.name}
                 </h3>
-                
-                <p style={{
-                  color: theme.text,
-                  marginBottom: '20px',
-                  lineHeight: 1.5,
-                  flex: 1
-                }}>
+
+                <p
+                  style={{
+                    color: theme.text,
+                    marginBottom: "20px",
+                    lineHeight: 1.5,
+                    flex: 1,
+                  }}
+                >
                   {hotel.description}
                 </p>
-                
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginTop: 'auto'
-                }}>
-                  <div style={{
-                    fontSize: '1.5rem',
-                    fontWeight: 700,
-                    color: theme.accent
-                  }}>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginTop: "auto",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: 700,
+                      color: theme.accent,
+                    }}
+                  >
                     KSH {hotel.price.toLocaleString()}
-                    <span style={{
-                      fontSize: '1rem',
-                      color: theme.lightText,
-                      fontWeight: 400
-                    }}>/night</span>
+                    <span
+                      style={{
+                        fontSize: "1rem",
+                        color: theme.lightText,
+                        fontWeight: 400,
+                      }}
+                    >
+                      /night
+                    </span>
                   </div>
-                  
+
                   <button
                     onClick={() => {
                       setModalHotel(hotel);
@@ -447,21 +482,20 @@ const BerlinPage = () => {
                     }}
                     style={{
                       background: theme.primary,
-                      color: '#fff',
-                      border: 'none',
-                      padding: '12px 24px',
-                      
+                      color: "#fff",
+                      border: "none",
+                      padding: "12px 24px",
                       fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
                     }}
                     whileHover={{ background: theme.accent }}
                   >
                     <span>BOOK NOW</span>
-                    <span style={{ fontSize: '1.2rem' }}>→</span>
+                    <span style={{ fontSize: "1.2rem" }}>→</span>
                   </button>
                 </div>
               </div>
@@ -477,17 +511,17 @@ const BerlinPage = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           style={{
-            position: 'fixed',
+            position: "fixed",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0,0,0,0.9)',
+            background: "rgba(0,0,0,0.9)",
             zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
           }}
         >
           <motion.div
@@ -495,223 +529,242 @@ const BerlinPage = () => {
             animate={{ scale: 1, y: 0 }}
             style={{
               background: theme.card,
-              
-              maxWidth: '900px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflow: 'auto',
-              position: 'relative',
-              boxShadow: `0 0 0 2px ${theme.accent}`
+              maxWidth: "900px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflow: "auto",
+              position: "relative",
+              boxShadow: `0 0 0 2px ${theme.accent}`,
             }}
           >
             <button
               onClick={() => setModalHotel(null)}
               style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
+                position: "absolute",
+                top: "20px",
+                right: "20px",
                 background: theme.accent,
-                color: '#fff',
-                border: 'none',
-                width: '40px',
-                height: '40px',
-             
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
+                color: "#fff",
+                border: "none",
+                width: "40px",
+                height: "40px",
+                fontSize: "1.5rem",
+                fontWeight: "bold",
+                cursor: "pointer",
                 zIndex: 10,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               ×
             </button>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '40px',
-              padding: '40px'
-            }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "40px",
+                padding: "40px",
+              }}
+            >
               {/* Image Gallery */}
-              <div style={{
-                position: 'relative',
-                height: '400px',
-              
-                overflow: 'hidden'
-              }}>
+              <div
+                style={{
+                  position: "relative",
+                  height: "400px",
+                  overflow: "hidden",
+                }}
+              >
                 <img
                   src={modalHotel.images[modalImageIdx]}
                   alt=""
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
                   }}
                 />
-                
+
                 <button
                   onClick={handlePrevImage}
                   style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '20px',
-                    transform: 'translateY(-50%)',
-                    background: 'rgba(0,0,0,0.5)',
-                    color: '#fff',
-                    border: 'none',
-                    width: '40px',
-                    height: '40px',
-                    
-                    fontSize: '1.2rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    position: "absolute",
+                    top: "50%",
+                    left: "20px",
+                    transform: "translateY(-50%)",
+                    background: "rgba(0,0,0,0.5)",
+                    color: "#fff",
+                    border: "none",
+                    width: "40px",
+                    height: "40px",
+                    fontSize: "1.2rem",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   ←
                 </button>
-                
+
                 <button
                   onClick={handleNextImage}
                   style={{
-                    position: 'absolute',
-                    top: '50%',
-                    right: '20px',
-                    transform: 'translateY(-50%)',
-                    background: 'rgba(0,0,0,0.5)',
-                    color: '#fff',
-                    border: 'none',
-                    width: '40px',
-                    height: '40px',
-                   
-                    fontSize: '1.2rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    position: "absolute",
+                    top: "50%",
+                    right: "20px",
+                    transform: "translateY(-50%)",
+                    background: "rgba(0,0,0,0.5)",
+                    color: "#fff",
+                    border: "none",
+                    width: "40px",
+                    height: "40px",
+                    fontSize: "1.2rem",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   →
                 </button>
-                
-                <div style={{
-                  position: 'absolute',
-                  bottom: '20px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  display: 'flex',
-                  gap: '10px'
-                }}>
+
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "20px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    display: "flex",
+                    gap: "10px",
+                  }}
+                >
                   {modalHotel.images.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setModalImageIdx(i)}
                       style={{
-                        width: '10px',
-                        height: '10px',
-                       
-                        background: i === modalImageIdx ? theme.accent : 'rgba(255,255,255,0.5)',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: 0
+                        width: "10px",
+                        height: "10px",
+                        background:
+                          i === modalImageIdx
+                            ? theme.accent
+                            : "rgba(255,255,255,0.5)",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: 0,
                       }}
                     />
                   ))}
                 </div>
               </div>
-              
+
               {/* Content */}
               <div>
-                <h2 style={{
-                  fontSize: '2rem',
-                  fontWeight: 800,
-                  marginBottom: '16px',
-                  color: theme.primary,
-                  position: 'relative',
-                  display: 'inline-block'
-                }}>
+                <h2
+                  style={{
+                    fontSize: "2rem",
+                    fontWeight: 800,
+                    marginBottom: "16px",
+                    color: theme.primary,
+                    position: "relative",
+                    display: "inline-block",
+                  }}
+                >
                   {modalHotel.name}
-                  <span style={{
-                    position: 'absolute',
-                    bottom: '-8px',
-                    left: 0,
-                    width: '60px',
-                    height: '4px',
-                    background: theme.accent,
-                   
-                  }}></span>
+                  <span
+                    style={{
+                      position: "absolute",
+                      bottom: "-8px",
+                      left: 0,
+                      width: "60px",
+                      height: "4px",
+                      background: theme.accent,
+                    }}
+                  ></span>
                 </h2>
-                
-                <p style={{
-                  color: theme.text,
-                  marginBottom: '24px',
-                  lineHeight: 1.6
-                }}>
+
+                <p
+                  style={{
+                    color: theme.text,
+                    marginBottom: "24px",
+                    lineHeight: 1.6,
+                  }}
+                >
                   {modalHotel.description}
                 </p>
-                
-                <div style={{
-                  background: '#f8f8f8',
-                  
-                  padding: '20px',
-                  marginBottom: '24px'
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '16px'
-                  }}>
+
+                <div
+                  style={{
+                    background: "#f8f8f8",
+                    padding: "20px",
+                    marginBottom: "24px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "16px",
+                    }}
+                  >
                     <span style={{ fontWeight: 600 }}>Price per night:</span>
-                    <span style={{
-                      fontWeight: 700,
-                      fontSize: '1.2rem',
-                      color: theme.accent
-                    }}>
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        fontSize: "1.2rem",
+                        color: theme.accent,
+                      }}
+                    >
                       KSH {modalHotel.price.toLocaleString()}
                     </span>
                   </div>
-                  
+
                   {!showBooking && !bookingSuccess && (
                     <button
                       onClick={() => setShowBooking(true)}
                       style={{
-                        width: '100%',
-                        padding: '16px',
+                        width: "100%",
+                        padding: "16px",
                         background: theme.primary,
-                        color: '#fff',
-                        border: 'none',
-                        
+                        color: "#fff",
+                        border: "none",
                         fontWeight: 700,
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        fontSize: '1rem'
+                        cursor: "pointer",
+                        transition: "all 0.3s ease",
+                        fontSize: "1rem",
                       }}
                     >
                       RESERVE NOW
                     </button>
                   )}
                 </div>
-                
+
                 {/* Booking Form */}
                 {showBooking && !bookingSuccess && (
                   <form onSubmit={handleBookingSubmit}>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: '16px',
-                      marginBottom: '24px'
-                    }}>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: "16px",
+                        marginBottom: "24px",
+                      }}
+                    >
+                      
                       <div>
-                        <label style={{
-                          display: 'block',
-                          marginBottom: '8px',
-                          fontWeight: 600,
-                          fontSize: '0.9rem'
-                        }}>Full Name</label>
+                        <label
+                          style={{
+                            display: "block",
+                            marginBottom: "8px",
+                            fontWeight: 600,
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          Full Name
+                        </label>
                         <input
                           type="text"
                           name="name"
@@ -719,22 +772,54 @@ const BerlinPage = () => {
                           onChange={handleBookingChange}
                           required
                           style={{
-                            width: '100%',
-                            padding: '12px',
-                            
+                            width: "100%",
+                            padding: "12px",
                             border: `1px solid ${theme.border}`,
-                            fontSize: '1rem'
+                            fontSize: "1rem",
                           }}
                         />
                       </div>
                       
                       <div>
-                        <label style={{
-                          display: 'block',
-                          marginBottom: '8px',
-                          fontWeight: 600,
-                          fontSize: '0.9rem'
-                        }}>Phone</label>
+                        <label
+                          htmlFor="email"
+                          style={{
+                            display: "block",
+                            marginBottom: "8px",
+                            fontWeight: 600,
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          value={bookingForm.email}
+                          onChange={handleBookingChange}
+                          required
+                          style={{
+                            width: "100%",
+                            padding: "12px",
+                            border: `1px solid ${theme.border}`,
+                            fontSize: "1rem",
+                          }}
+                        />
+                      </div>
+
+
+                      <div>
+                        <label
+                          style={{
+                            display: "block",
+                            marginBottom: "8px",
+                            fontWeight: 600,
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          Phone
+                        </label>
                         <input
                           type="tel"
                           name="phone"
@@ -742,22 +827,25 @@ const BerlinPage = () => {
                           onChange={handleBookingChange}
                           required
                           style={{
-                            width: '100%',
-                            padding: '12px',
-                           
+                            width: "100%",
+                            padding: "12px",
                             border: `1px solid ${theme.border}`,
-                            fontSize: '1rem'
+                            fontSize: "1rem",
                           }}
                         />
                       </div>
-                      
+
                       <div>
-                        <label style={{
-                          display: 'block',
-                          marginBottom: '8px',
-                          fontWeight: 600,
-                          fontSize: '0.9rem'
-                        }}>Check-in</label>
+                        <label
+                          style={{
+                            display: "block",
+                            marginBottom: "8px",
+                            fontWeight: 600,
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          Check-in
+                        </label>
                         <input
                           type="date"
                           name="checkIn"
@@ -765,22 +853,25 @@ const BerlinPage = () => {
                           onChange={handleBookingChange}
                           required
                           style={{
-                            width: '100%',
-                            padding: '12px',
-                           
+                            width: "100%",
+                            padding: "12px",
                             border: `1px solid ${theme.border}`,
-                            fontSize: '1rem'
+                            fontSize: "1rem",
                           }}
                         />
                       </div>
-                      
+
                       <div>
-                        <label style={{
-                          display: 'block',
-                          marginBottom: '8px',
-                          fontWeight: 600,
-                          fontSize: '0.9rem'
-                        }}>Check-out</label>
+                        <label
+                          style={{
+                            display: "block",
+                            marginBottom: "8px",
+                            fontWeight: 600,
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          Check-out
+                        </label>
                         <input
                           type="date"
                           name="checkOut"
@@ -788,22 +879,25 @@ const BerlinPage = () => {
                           onChange={handleBookingChange}
                           required
                           style={{
-                            width: '100%',
-                            padding: '12px',
-                          
+                            width: "100%",
+                            padding: "12px",
                             border: `1px solid ${theme.border}`,
-                            fontSize: '1rem'
+                            fontSize: "1rem",
                           }}
                         />
                       </div>
-                      
+
                       <div>
-                        <label style={{
-                          display: 'block',
-                          marginBottom: '8px',
-                          fontWeight: 600,
-                          fontSize: '0.9rem'
-                        }}>Guests</label>
+                        <label
+                          style={{
+                            display: "block",
+                            marginBottom: "8px",
+                            fontWeight: 600,
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          Guests
+                        </label>
                         <input
                           type="number"
                           name="guests"
@@ -813,103 +907,116 @@ const BerlinPage = () => {
                           onChange={handleBookingChange}
                           required
                           style={{
-                            width: '100%',
-                            padding: '12px',
-                            
+                            width: "100%",
+                            padding: "12px",
                             border: `1px solid ${theme.border}`,
-                            fontSize: '1rem'
+                            fontSize: "1rem",
                           }}
                         />
                       </div>
                     </div>
-                    
-                    <div style={{
-                      background: '#f8f8f8',
-                     
-                      padding: '20px',
-                      marginBottom: '24px',
-                      textAlign: 'center'
-                    }}>
-                      <div style={{
-                        fontSize: '1.2rem',
-                        fontWeight: 700,
-                        marginBottom: '12px'
-                      }}>
-                        TOTAL: KSH {totalPrice.toLocaleString()}
-                      </div>
-                      
-                      <button
-                        type="submit"
-                        disabled={stkStatus === 'pending'}
+
+                    <div
+                      style={{
+                        background: "#f8f8f8",
+                        padding: "20px",
+                        marginBottom: "24px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <div
                         style={{
-                          width: '100%',
-                          padding: '16px',
-                          background: stkStatus === 'pending' ? '#ccc' : theme.accent,
-                          color: '#fff',
-                          border: 'none',
-                         
+                          fontSize: "1.2rem",
                           fontWeight: 700,
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                          fontSize: '1rem'
+                          marginBottom: "12px",
                         }}
                       >
-                        {stkStatus === 'pending' ? 'PROCESSING PAYMENT...' : 'CONFIRM & PAY'}
+                        TOTAL: KSH {totalPrice.toLocaleString()}
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={stkStatus === "pending"}
+                        style={{
+                          width: "100%",
+                          padding: "16px",
+                          background:
+                            stkStatus === "pending" ? "#ccc" : theme.accent,
+                          color: "#fff",
+                          border: "none",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          transition: "all 0.3s ease",
+                          fontSize: "1rem",
+                        }}
+                      >
+                        {stkStatus === "pending"
+                          ? "PROCESSING PAYMENT..."
+                          : "CONFIRM & PAY"}
                       </button>
-                      
-                      {stkStatus === 'pending' && (
-                        <div style={{
-                          marginTop: '16px',
-                          color: theme.accent,
-                          fontWeight: 600
-                        }}>
+
+                      {stkStatus === "pending" && (
+                        <div
+                          style={{
+                            marginTop: "16px",
+                            color: theme.accent,
+                            fontWeight: 600,
+                          }}
+                        >
                           Please check your phone to complete payment
                         </div>
                       )}
                     </div>
                   </form>
                 )}
-                
+
                 {/* Success Message */}
                 {bookingSuccess && (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '40px 20px'
-                  }}>
-                    <div style={{
-                      fontSize: '3rem',
-                      marginBottom: '20px',
-                      color: '#4CAF50'
-                    }}>
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "40px 20px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "3rem",
+                        marginBottom: "20px",
+                        color: "#4CAF50",
+                      }}
+                    >
                       ✓
                     </div>
-                    <h3 style={{
-                      fontSize: '1.8rem',
-                      fontWeight: 700,
-                      marginBottom: '16px',
-                      color: theme.primary
-                    }}>
+                    <h3
+                      style={{
+                        fontSize: "1.8rem",
+                        fontWeight: 700,
+                        marginBottom: "16px",
+                        color: theme.primary,
+                      }}
+                    >
                       Booking Confirmed!
                     </h3>
-                    <p style={{
-                      marginBottom: '24px',
-                      lineHeight: 1.6
-                    }}>
-                      Your reservation at {modalHotel.name} has been confirmed. 
-                      A receipt has been sent to your email.
+                    <p
+                      style={{
+                        marginBottom: "24px",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      Your reservation at {modalHotel.name} has been confirmed.
+                      A receipt has been sent to {bookingForm.email}
                     </p>
                     <button
                       onClick={() => setModalHotel(null)}
                       style={{
-                        padding: '16px 32px',
+                        padding: "16px 32px",
                         background: theme.primary,
-                        color: '#fff',
-                        border: 'none',
-                       
+                        color: "#fff",
+                        border: "none",
                         fontWeight: 700,
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        fontSize: '1rem'
+                        cursor: "pointer",
+                        transition: "all 0.3s ease",
+                        fontSize: "1rem",
                       }}
                     >
                       CLOSE
@@ -918,58 +1025,6 @@ const BerlinPage = () => {
                 )}
               </div>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* Auth Modal */}
-      {showAuth && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.8)',
-            zIndex: 2000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            style={{
-              background: theme.card,
-              
-              width: '100%',
-              maxWidth: '400px',
-              padding: '40px',
-              position: 'relative',
-              boxShadow: `0 0 0 2px ${theme.accent}`
-            }}
-          >
-            <button
-              onClick={() => setShowAuth(false)}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5rem',
-                cursor: 'pointer',
-                color: theme.text
-              }}
-            >
-              ×
-            </button>
-            <AuthPage onClose={() => setShowAuth(false)} onSuccess={handleAuthSuccess} />
           </motion.div>
         </motion.div>
       )}

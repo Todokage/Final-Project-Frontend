@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Import your images
 import dianiImage from './images/diani.jpg';
@@ -12,79 +14,85 @@ import nyImage from './images/new-york.jpg';
 import parisImage from './images/paris.jpg';
 import berlinImage from './images/berlin.jpg';
 
-const sections = [
-  { 
-    id: 'Diani,KENYA', 
-    title: 'Diani', 
-    theme: 'blue',
-    image: dianiImage,
-    filter: 'rgba(32, 178, 170, 0.4)',
-    accentColor: '#20b2aa'
-  },
-  { 
-    id: 'Tokyo,JAPAN', 
-    title: 'Tokyo', 
-    theme: 'pink',
-    image: tokyoImage,
-    filter: 'rgba(231, 84, 128, 0.4)',
-    accentColor: '#e75480'
-  },
-  { 
-    id: 'Monaco,', 
-    title: 'Monaco', 
-    theme: 'red',
-    image: monacoImage,
-    filter: 'rgba(231, 76, 60, 0.4)',
-    accentColor: '#e74c3c'
-  },
-  { 
-    id: 'Dubai,UNITED ARAB EMIRATES', 
-    title: 'Dubai', 
-    theme: 'gold',
-    image: dubaiImage,
-    filter: 'rgba(255, 215, 0, 0.4)',
-    accentColor: '#ffd700'
-  },
-  { 
-    id: 'London,UNITED KINGDOM', 
-    title: 'London', 
-    theme: 'brown',
-    image: londonImage,
-    filter: 'rgba(139, 92, 42, 0.4)',
-    accentColor: '#8b5c2a'
-  },
-  { 
-    id: 'New York,USA', 
-    title: 'New York', 
-    theme: 'indigo',
-    image: nyImage,
-    filter: 'rgba(75, 0, 130, 0.4)',
-    accentColor: '#4b0082'
-  },
-  { 
-    id: 'Paris,FRANCE', 
-    title: 'Paris', 
-    theme: 'purple',
-    image: parisImage,
-    filter: 'rgba(142, 68, 173, 0.4)',
-    accentColor: '#8e44ad'
-  },
-  { 
-    id: 'Berlin,GERMANY', 
-    title: 'Berlin', 
-    theme: 'teal',
-    image: berlinImage,
-    filter: 'rgba(32, 207, 207, 0.4)',
-    accentColor: '#20cfcf'
-  },
-];
-
 const LandingPage = () => {
+  // Sections data moved inside the component
+  const sections = [
+    { 
+      id: 'Diani,KENYA', 
+      title: 'Diani', 
+      theme: 'blue',
+      image: dianiImage,
+      filter: 'rgba(32, 178, 170, 0.4)',
+      accentColor: '#20b2aa'
+    },
+    { 
+      id: 'Tokyo,JAPAN', 
+      title: 'Tokyo', 
+      theme: 'pink',
+      image: tokyoImage,
+      filter: 'rgba(231, 84, 128, 0.4)',
+      accentColor: '#e75480'
+    },
+    { 
+      id: 'Monaco,', 
+      title: 'Monaco', 
+      theme: 'red',
+      image: monacoImage,
+      filter: 'rgba(231, 76, 60, 0.4)',
+      accentColor: '#e74c3c'
+    },
+    { 
+      id: 'Dubai,UNITED ARAB EMIRATES', 
+      title: 'Dubai', 
+      theme: 'gold',
+      image: dubaiImage,
+      filter: 'rgba(255, 215, 0, 0.4)',
+      accentColor: '#ffd700'
+    },
+    { 
+      id: 'London,UNITED KINGDOM', 
+      title: 'London', 
+      theme: 'brown',
+      image: londonImage,
+      filter: 'rgba(139, 92, 42, 0.4)',
+      accentColor: '#8b5c2a'
+    },
+    { 
+      id: 'New York,USA', 
+      title: 'New York', 
+      theme: 'indigo',
+      image: nyImage,
+      filter: 'rgba(75, 0, 130, 0.4)',
+      accentColor: '#4b0082'
+    },
+    { 
+      id: 'Paris,FRANCE', 
+      title: 'Paris', 
+      theme: 'purple',
+      image: parisImage,
+      filter: 'rgba(142, 68, 173, 0.4)',
+      accentColor: '#8e44ad'
+    },
+    { 
+      id: 'Berlin,GERMANY', 
+      title: 'Berlin', 
+      theme: 'teal',
+      image: berlinImage,
+      filter: 'rgba(32, 207, 207, 0.4)',
+      accentColor: '#20cfcf'
+    },
+  ];
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(1);
   const [hovered, setHovered] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [email, setEmail] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const timeoutRef = useRef(null);
+  const modalTimeoutRef = useRef(null);
 
   const resetTimeout = () => {
     if (timeoutRef.current) {
@@ -104,7 +112,17 @@ const LandingPage = () => {
     return () => {
       resetTimeout();
     };
-  }, [currentSlide, hovered]);
+  }, [currentSlide, hovered, sections.length]);
+
+  useEffect(() => {
+    modalTimeoutRef.current = setTimeout(() => {
+      setShowModal(true);
+    }, 30000);
+
+    return () => {
+      clearTimeout(modalTimeoutRef.current);
+    };
+  }, []);
 
   const handleVisitNow = (section) => {
     navigate(`/visit/${section.title.toLowerCase().replace(/\s+/g, '')}`);
@@ -122,7 +140,39 @@ const LandingPage = () => {
     resetTimeout();
   };
 
-  // Unified transition settings
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.success('Thank you for your feedback!', {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
+      setEmail('');
+      setFeedback('');
+      setShowModal(false);
+    } catch (error) {
+      toast.error('Something went wrong. Please try again.', {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const transitionConfig = {
     type: 'spring',
     stiffness: 100,
@@ -163,7 +213,8 @@ const LandingPage = () => {
         backgroundColor: '#000'
       }}
     >
-      {/* Background Images with Synchronized Transition */}
+      <ToastContainer />
+
       <AnimatePresence custom={direction} initial={false}>
         <motion.div
           key={currentSlide}
@@ -196,7 +247,6 @@ const LandingPage = () => {
             zIndex: 0,
           }}
         >
-          {/* Color Filter with Matching Animation */}
           <motion.div
             key={`filter-${currentSlide}`}
             initial={{ opacity: 0 }}
@@ -216,7 +266,6 @@ const LandingPage = () => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Content */}
       <div
         style={{
           position: 'relative',
@@ -231,7 +280,6 @@ const LandingPage = () => {
           fontFamily: 'Inter, sans-serif'
         }}
       >
-        {/* Main Content */}
         <motion.div
           key={`content-${currentSlide}`}
           initial={{ opacity: 0, y: 20 }}
@@ -245,8 +293,6 @@ const LandingPage = () => {
             maxWidth: '600px',
             position: 'relative',
             zIndex: 2,
-            
-            
           }}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
@@ -294,7 +340,6 @@ const LandingPage = () => {
           </motion.button>
         </motion.div>
 
-        {/* Dots Indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -333,7 +378,155 @@ const LandingPage = () => {
           ))}
         </motion.div>
       </div>
-      
+
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.7)',
+              zIndex: 1000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onClick={() => setShowModal(false)}
+          >
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25 }}
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: '8px',
+                padding: '2rem',
+                maxWidth: '500px',
+                width: '90%',
+                position: 'relative',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: '#666',
+                }}
+              >
+                ×
+              </button>
+
+              <h2 style={{ marginBottom: '1.5rem', color: sections[currentSlide].accentColor }}>
+                Stay Updated & Share Feedback
+              </h2>
+              
+              <form onSubmit={handleSubmit}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                    Email (for newsletter)
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: `1px solid #ddd`,
+                      borderRadius: '4px',
+                      fontSize: '1rem',
+                    }}
+                    placeholder="your@email.com"
+                    required
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label htmlFor="feedback" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                    Your Feedback
+                  </label>
+                  <textarea
+                    id="feedback"
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: `1px solid #ddd`,
+                      borderRadius: '4px',
+                      fontSize: '1rem',
+                      minHeight: '100px',
+                    }}
+                    placeholder="What do you think about our service?"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  style={{
+                    backgroundColor: sections[currentSlide].accentColor,
+                    color: '#fff',
+                    border: 'none',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '4px',
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'opacity 0.3s',
+                    opacity: isSubmitting ? 0.7 : 1,
+                  }}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit'}
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.button
+        onClick={() => setShowModal(true)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        style={{
+          position: 'fixed',
+          bottom: '2rem',
+          right: '2rem',
+          backgroundColor: sections[currentSlide].accentColor,
+          color: '#fff',
+          border: 'none',
+          borderRadius: '50%',
+          width: '60px',
+          height: '60px',
+          fontSize: '1.5rem',
+          cursor: 'pointer',
+          zIndex: 100,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        aria-label="Give feedback"
+      >
+        ✉️
+      </motion.button>
     </div>
   );
 };

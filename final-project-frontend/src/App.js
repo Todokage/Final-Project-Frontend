@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
-import './App.css';
-import LandingPage from './Components/LandingPage';
-import Navbar from './Components/Navbar';
-import AuthPage from './Components/AuthPage';
-import About from './Components/About'; 
-import Footer from './Components/Footer';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import DianiPage from './Components/DianiPage';
-import TokyoPage from './Components/TokyoPage';
-import MonacoPage from './Components/MonacoPage';
-import DubaiPage from './Components/DubaiPage';
-import LondonPage from './Components/LondonPage';
-import NewYorkPage from './Components/NewYorkPage';
-import ParisPage from './Components/ParisPage';
-import BerlinPage from './Components/BerlinPage';
+import React, { useState } from "react";
+import "./App.css";
+import LandingPage from "./Components/LandingPage";
+import Navbar from "./Components/Navbar";
+import AuthPage from "./Components/AuthPage";
+import About from "./Components/About";
+import Footer from "./Components/Footer";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import DianiPage from "./Components/DianiPage";
+import TokyoPage from "./Components/TokyoPage";
+import MonacoPage from "./Components/MonacoPage";
+import DubaiPage from "./Components/DubaiPage";
+import LondonPage from "./Components/LondonPage";
+import NewYorkPage from "./Components/NewYorkPage";
+import ParisPage from "./Components/ParisPage";
+import BerlinPage from "./Components/BerlinPage";
+
 
 function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -50,7 +51,6 @@ function App() {
           <Route path="/visit/newyork" element={<NewYorkPage />} />
           <Route path="/visit/paris" element={<ParisPage />} />
           <Route path="/visit/berlin" element={<BerlinPage />} />
-
         </Routes>
         <About />
         <Footer />

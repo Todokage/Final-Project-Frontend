@@ -2,66 +2,60 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-// Tokyo themed color scheme 
+// Tokyo color theme 
 const theme = {
-  primary: "#2a2a2a", // Dark gray
-  secondary: "#5a5a5a", // Medium gray
-  accent: "#e60012", // Japanese red
-  accent2: "#ff9da4", // Light pink
-  bg: "#f5f5f5", // Light gray background
-  card: "#ffffff", // White cards
-  border: "#e0e0e0", // Light gray border
+  primary: "#0a0a0a",
+  secondary: "#1a1a1a",
+  accent: "#ff2d75", 
+  accent2: "#00b4d8", 
+  bg: "#f0f0f0",
+  card: "#ffffff",
+  border: "#e0e0e0",
   shadow: "rgba(0,0,0,0.15)",
-  text: "#333", // Dark text
-  lightText: "#888", // Light text
+  text: "#333",
+  lightText: "#888",
 };
 
-const JPY_TO_KES = 1.2; //  Yen to KSH conversion
+const JPY_TO_KES = 1.2; 
 
 const hotels = [
   {
-    id: 1,
     name: "Park Hotel Tokyo",
-    description:
-      "Luxury hotel with panoramic city views near Shimbashi station",
-    price: 30000 * JPY_TO_KES,
+    description: "Luxury hotel with panoramic city views and art installations",
+    price: 35000 * JPY_TO_KES,
     images: [
-      "https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?auto=format&fit=crop&w=800&q=80",
       "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["Luxury", "City Views", "Central"],
+    tags: ["Luxury", "City Views", "Art"],
   },
   {
-    id: 2,
-    name: "Ryokan Sawanoya",
-    description: "Traditional Japanese inn with tatami rooms and onsen baths",
-    price: 15000 * JPY_TO_KES,
+    name: "Shinjuku Granbell Hotel",
+    description: "Stylish boutique hotel in the heart of Shinjuku nightlife",
+    price: 18000 * JPY_TO_KES,
     images: [
-      "https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1492571350019-22de08371fd3?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["Traditional", "Onsen", "Cultural"],
+    tags: ["Boutique", "Nightlife", "Modern"],
   },
 ];
 
 const slides = [
   {
-    id: 1,
     title: "Shibuya Crossing",
-    image:
-      "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "The world's busiest pedestrian crossing in the heart of Tokyo",
+    image: "https://images.unsplash.com/photo-1492571350019-22de08371fd3?auto=format&fit=crop&w=1200&q=80",
+    description: "The world's busiest pedestrian crossing in the heart of Tokyo",
   },
   {
-    id: 2,
-    title: "Senso-ji Temple",
-    image:
-      "https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "Tokyo's oldest and most significant Buddhist temple in Asakusa",
+    title: "Tokyo Tower",
+    image: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80",
+    description: "Iconic 333-meter tall communications and observation tower",
   },
 ];
+
+// Backend URL for integration
+const BACKEND_URL = "http://localhost:3000"; 
 
 const TokyoPage = () => {
   const navigate = useNavigate();
@@ -79,8 +73,12 @@ const TokyoPage = () => {
   });
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [stkStatus, setStkStatus] = useState(null);
+  const [isPaying, setIsPaying] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  const [error, setError] = useState(null);
   const navbarRef = useRef(null);
   const [showHomeBtn, setShowHomeBtn] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Scroll effects
   useEffect(() => {
@@ -88,6 +86,7 @@ const TokyoPage = () => {
       if (!navbarRef.current) return;
       const navbarBottom = navbarRef.current.getBoundingClientRect().bottom;
       setShowHomeBtn(navbarBottom < 0);
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -102,10 +101,8 @@ const TokyoPage = () => {
         setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
       }, 3500);
     }
-    return () => {
-      if (imgInterval) clearInterval(imgInterval);
-    };
-  }, [modalHotel]);
+    return () => clearInterval(imgInterval);
+  }, [modalHotel, modalHotel?.images.length]);
 
   // Slide rotation
   useEffect(() => {
@@ -116,14 +113,12 @@ const TokyoPage = () => {
   }, []);
 
   const handlePrevImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx(
       (prev) => (prev - 1 + modalHotel.images.length) % modalHotel.images.length
     );
   };
 
   const handleNextImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
   };
 
@@ -136,17 +131,94 @@ const TokyoPage = () => {
     ? modalHotel.price * (parseInt(bookingForm.guests, 10) || 1)
     : 0;
 
-  const simulateSTKPush = () => {
+  //  MPESA STK Push Integration 
+  const initiateSTKPush = async () => {
+    setIsPaying(true);
+    setError(null);
     setStkStatus("pending");
-    setTimeout(() => {
-      setStkStatus("success");
-      setBookingSuccess(true);
-    }, 2000);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/mpesa/stkpush`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: bookingForm.phone,
+          amount: totalPrice,
+          accountReference: "TokyoHotel",
+          transactionDesc: `Booking for ${bookingForm.name}`,
+        }),
+      });
+      const data = await res.json();
+      if (data.ResponseCode === "0") {
+        setStkStatus("pending");
+        return true;
+      } else {
+        setError(
+          data.errorMessage ||
+            "Failed to initiate payment. Please check your phone number."
+        );
+        setStkStatus(null);
+        return false;
+      }
+    } catch (err) {
+      setError("Network error during payment.");
+      setStkStatus(null);
+      return false;
+    } finally {
+      setIsPaying(false);
+    }
   };
 
-  const handleBookingSubmit = (e) => {
+  //  Email Integration 
+  const sendBookingEmail = async () => {
+    setIsEmailing(true);
+    setError(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/email/booking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: bookingForm.email,
+          subject: "Tokyo Hotel Booking Confirmation",
+          text: `Dear ${bookingForm.name},\n\nYour booking at Tokyo Hotel is confirmed.\nCheck-in: ${bookingForm.checkIn}\nCheck-out: ${bookingForm.checkOut}\nGuests: ${bookingForm.guests}\nTotal: KES ${totalPrice}\n\nThank you!`,
+          html: `<p>Dear ${bookingForm.name},</p>
+            <p>Your booking at <b>Tokyo Hotel</b> is confirmed.</p>
+            <ul>
+              <li>Check-in: ${bookingForm.checkIn}</li>
+              <li>Check-out: ${bookingForm.checkOut}</li>
+              <li>Guests: ${bookingForm.guests}</li>
+              <li>Total: <b>KES ${totalPrice}</b></li>
+            </ul>
+            <p>Thank you!</p>`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBookingSuccess(true);
+      } else {
+        setError("Failed to send confirmation email.");
+      }
+    } catch (err) {
+      setError("Network error during email sending.");
+    } finally {
+      setIsEmailing(false);
+    }
+  };
+
+  //  Booking Submit Handler 
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    simulateSTKPush();
+    setBookingSuccess(false);
+    setError(null);
+
+    //  Initiate MPESA STK Push
+    const paymentOk = await initiateSTKPush();
+    if (!paymentOk) return;
+
+  
+
+    //  Send confirmation email
+    await sendBookingEmail();
+    setStkStatus(null);
   };
 
   return (
@@ -159,13 +231,13 @@ const TokyoPage = () => {
         overflowX: "hidden",
       }}
     >
-      {/* Urban Hero Section with Japanese aesthetic */}
+      {/* Edgy Hero Section with Diagonal Cut */}
       <div
         ref={navbarRef}
         style={{
           width: "100%",
           minHeight: "80vh",
-          background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)`,
+          background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -176,15 +248,15 @@ const TokyoPage = () => {
         }}
       >
         <img
-          src={slides[currentSlide]?.image}
-          alt={slides[currentSlide]?.title || "Tokyo"}
+          src={slides[currentSlide].image}
+          alt={slides[currentSlide].title}
           style={{
             position: "absolute",
             width: "100%",
             height: "100%",
             objectFit: "cover",
             opacity: 0.4,
-            filter: "brightness(0.8) contrast(120%)",
+            filter: "grayscale(30%) contrast(120%)",
           }}
         />
 
@@ -204,11 +276,11 @@ const TokyoPage = () => {
             style={{
               fontSize: "clamp(2.5rem, 8vw, 5rem)",
               fontWeight: 900,
-              color: theme.accent,
+              color: "#fff",
               letterSpacing: "-0.03em",
               marginBottom: "1rem",
               textTransform: "uppercase",
-              textShadow: "3px 3px 0 rgba(0,0,0,0.3)",
+              textShadow: "3px 3px 0 rgba(0,0,0,0.2)",
             }}
           >
             TOKYO
@@ -225,7 +297,7 @@ const TokyoPage = () => {
               letterSpacing: "0.1em",
             }}
           >
-            {slides[currentSlide]?.title}
+            {slides[currentSlide].title}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -240,7 +312,7 @@ const TokyoPage = () => {
               textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
             }}
           >
-            {slides[currentSlide]?.description}
+            {slides[currentSlide].description}
           </motion.p>
         </div>
 
@@ -256,21 +328,21 @@ const TokyoPage = () => {
             zIndex: 10,
           }}
         >
-          {slides.map((slide, idx) => (
+          {slides.map((_, idx) => (
             <button
-              key={slide.id}
+              key={idx}
               onClick={() => setCurrentSlide(idx)}
               style={{
                 width: "12px",
                 height: "12px",
                 background:
-                  idx === currentSlide ? theme.accent : "rgba(255,255,255,0.3)",
+                  idx === currentSlide ? "#fff" : "rgba(255,255,255,0.3)",
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 transform: idx === currentSlide ? "scale(1.3)" : "scale(1)",
               }}
-              aria-label={`Go to ${slide.title}`}
+              aria-label={`Go to slide ${idx + 1}`}
             />
           ))}
         </div>
@@ -306,7 +378,7 @@ const TokyoPage = () => {
         </motion.button>
       )}
 
-      {/* Hotel Cards Section */}
+      {/* Modern Hotel Cards Section */}
       <section
         style={{
           width: "100%",
@@ -333,7 +405,7 @@ const TokyoPage = () => {
             transform: "translateX(-50%)",
           }}
         >
-          Tokyo Accommodations
+          Hotels
           <span
             style={{
               position: "absolute",
@@ -356,7 +428,7 @@ const TokyoPage = () => {
         >
           {hotels.map((hotel) => (
             <motion.div
-              key={hotel.id}
+              key={hotel.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -499,6 +571,7 @@ const TokyoPage = () => {
                       alignItems: "center",
                       gap: "8px",
                     }}
+                    whileHover={{ background: theme.accent }}
                   >
                     <span>BOOK NOW</span>
                     <span style={{ fontSize: "1.2rem" }}>→</span>
@@ -510,7 +583,7 @@ const TokyoPage = () => {
         </div>
       </section>
 
-      {/* Hotel Booking Modal */}
+      {/* Modern Modal */}
       {modalHotel && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -562,7 +635,6 @@ const TokyoPage = () => {
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              aria-label="Close modal"
             >
               ×
             </button>
@@ -585,7 +657,7 @@ const TokyoPage = () => {
               >
                 <img
                   src={modalHotel.images[modalImageIdx]}
-                  alt={modalHotel.name}
+                  alt=""
                   style={{
                     width: "100%",
                     height: "100%",
@@ -611,7 +683,6 @@ const TokyoPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Previous image"
                 >
                   ←
                 </button>
@@ -634,7 +705,6 @@ const TokyoPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Next image"
                 >
                   →
                 </button>
@@ -664,7 +734,6 @@ const TokyoPage = () => {
                         cursor: "pointer",
                         padding: 0,
                       }}
-                      aria-label={`View image ${i + 1}`}
                     />
                   ))}
                 </div>
@@ -763,9 +832,9 @@ const TokyoPage = () => {
                         marginBottom: "24px",
                       }}
                     >
+                      
                       <div>
                         <label
-                          htmlFor="name"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -777,7 +846,6 @@ const TokyoPage = () => {
                         </label>
                         <input
                           type="text"
-                          id="name"
                           name="name"
                           value={bookingForm.name}
                           onChange={handleBookingChange}
@@ -790,6 +858,7 @@ const TokyoPage = () => {
                           }}
                         />
                       </div>
+                      
                       <div>
                         <label
                           htmlFor="email"
@@ -818,9 +887,9 @@ const TokyoPage = () => {
                         />
                       </div>
 
+
                       <div>
                         <label
-                          htmlFor="phone"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -832,7 +901,6 @@ const TokyoPage = () => {
                         </label>
                         <input
                           type="tel"
-                          id="phone"
                           name="phone"
                           value={bookingForm.phone}
                           onChange={handleBookingChange}
@@ -848,7 +916,6 @@ const TokyoPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkIn"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -860,7 +927,6 @@ const TokyoPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkIn"
                           name="checkIn"
                           value={bookingForm.checkIn}
                           onChange={handleBookingChange}
@@ -876,7 +942,6 @@ const TokyoPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkOut"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -888,7 +953,6 @@ const TokyoPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkOut"
                           name="checkOut"
                           value={bookingForm.checkOut}
                           onChange={handleBookingChange}
@@ -904,7 +968,6 @@ const TokyoPage = () => {
 
                       <div>
                         <label
-                          htmlFor="guests"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -916,7 +979,6 @@ const TokyoPage = () => {
                         </label>
                         <input
                           type="number"
-                          id="guests"
                           name="guests"
                           min="1"
                           max="10"
@@ -953,12 +1015,12 @@ const TokyoPage = () => {
 
                       <button
                         type="submit"
-                        disabled={stkStatus === "pending"}
+                        disabled={stkStatus === "pending" || isPaying || isEmailing}
                         style={{
                           width: "100%",
                           padding: "16px",
                           background:
-                            stkStatus === "pending" ? "#ccc" : theme.accent,
+                            stkStatus === "pending" || isPaying || isEmailing ? "#ccc" : theme.accent,
                           color: "#fff",
                           border: "none",
                           fontWeight: 700,
@@ -967,8 +1029,12 @@ const TokyoPage = () => {
                           fontSize: "1rem",
                         }}
                       >
-                        {stkStatus === "pending"
+                        {isPaying
                           ? "PROCESSING PAYMENT..."
+                          : isEmailing
+                          ? "SENDING EMAIL..."
+                          : stkStatus === "pending"
+                          ? "AWAITING PAYMENT..."
                           : "CONFIRM & PAY"}
                       </button>
 
@@ -981,6 +1047,17 @@ const TokyoPage = () => {
                           }}
                         >
                           Please check your phone to complete payment
+                        </div>
+                      )}
+                      {error && (
+                        <div
+                          style={{
+                            marginTop: "16px",
+                            color: "#d32f2f",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {error}
                         </div>
                       )}
                     </div>
@@ -1021,7 +1098,7 @@ const TokyoPage = () => {
                       }}
                     >
                       Your reservation at {modalHotel.name} has been confirmed.
-                      A receipt has been sent to {bookingForm.email}.
+                      A receipt has been sent to {bookingForm.email}
                     </p>
                     <button
                       onClick={() => setModalHotel(null)}
@@ -1045,6 +1122,34 @@ const TokyoPage = () => {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Global Styles */}
+      <style>
+        {`
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          body {
+            overflow-x: hidden;
+          }
+          button {
+            transition: all 0.3s ease;
+          }
+          button:hover {
+            opacity: 0.9;
+          }
+          input, textarea {
+            transition: all 0.3s ease;
+          }
+          input:focus, textarea:focus {
+            outline: none;
+            border-color: ${theme.accent} !important;
+            box-shadow: 0 0 0 2px ${theme.accent}33;
+          }
+        `}
+      </style>
     </div>
   );
 };

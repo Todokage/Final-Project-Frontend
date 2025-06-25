@@ -58,6 +58,9 @@ const slides = [
   },
 ];
 
+// Backend URL for integration
+const BACKEND_URL = "http://localhost:3000"; 
+
 const BerlinPage = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -74,6 +77,9 @@ const BerlinPage = () => {
   });
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [stkStatus, setStkStatus] = useState(null);
+  const [isPaying, setIsPaying] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  const [error, setError] = useState(null);
   const navbarRef = useRef(null);
   const [showHomeBtn, setShowHomeBtn] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -129,17 +135,94 @@ const BerlinPage = () => {
     ? modalHotel.price * (parseInt(bookingForm.guests, 10) || 1)
     : 0;
 
-  const simulateSTKPush = () => {
+  //  MPESA STK Push Integration 
+  const initiateSTKPush = async () => {
+    setIsPaying(true);
+    setError(null);
     setStkStatus("pending");
-    setTimeout(() => {
-      setStkStatus("success");
-      setBookingSuccess(true);
-    }, 2000);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/mpesa/stkpush`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: bookingForm.phone,
+          amount: totalPrice,
+          accountReference: "BerlinHotel",
+          transactionDesc: `Booking for ${bookingForm.name}`,
+        }),
+      });
+      const data = await res.json();
+      if (data.ResponseCode === "0") {
+        setStkStatus("pending");
+        return true;
+      } else {
+        setError(
+          data.errorMessage ||
+            "Failed to initiate payment. Please check your phone number."
+        );
+        setStkStatus(null);
+        return false;
+      }
+    } catch (err) {
+      setError("Network error during payment.");
+      setStkStatus(null);
+      return false;
+    } finally {
+      setIsPaying(false);
+    }
   };
 
-  const handleBookingSubmit = (e) => {
+  // Email Integration 
+  const sendBookingEmail = async () => {
+    setIsEmailing(true);
+    setError(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/email/booking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: bookingForm.email,
+          subject: "Berlin Hotel Booking Confirmation",
+          text: `Dear ${bookingForm.name},\n\nYour booking at Berlin Hotel is confirmed.\nCheck-in: ${bookingForm.checkIn}\nCheck-out: ${bookingForm.checkOut}\nGuests: ${bookingForm.guests}\nTotal: KES ${totalPrice}\n\nThank you!`,
+          html: `<p>Dear ${bookingForm.name},</p>
+            <p>Your booking at <b>Berlin Hotel</b> is confirmed.</p>
+            <ul>
+              <li>Check-in: ${bookingForm.checkIn}</li>
+              <li>Check-out: ${bookingForm.checkOut}</li>
+              <li>Guests: ${bookingForm.guests}</li>
+              <li>Total: <b>KES ${totalPrice}</b></li>
+            </ul>
+            <p>Thank you!</p>`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBookingSuccess(true);
+      } else {
+        setError("Failed to send confirmation email.");
+      }
+    } catch (err) {
+      setError("Network error during email sending.");
+    } finally {
+      setIsEmailing(false);
+    }
+  };
+
+  // Booking Submit Handler
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    simulateSTKPush();
+    setBookingSuccess(false);
+    setError(null);
+
+    // Initiate MPESA STK Push
+    const paymentOk = await initiateSTKPush();
+    if (!paymentOk) return;
+
+   
+
+    // Send confirmation email
+    await sendBookingEmail();
+    setStkStatus(null);
   };
 
   return (
@@ -936,12 +1019,12 @@ const BerlinPage = () => {
 
                       <button
                         type="submit"
-                        disabled={stkStatus === "pending"}
+                        disabled={stkStatus === "pending" || isPaying || isEmailing}
                         style={{
                           width: "100%",
                           padding: "16px",
                           background:
-                            stkStatus === "pending" ? "#ccc" : theme.accent,
+                            stkStatus === "pending" || isPaying || isEmailing ? "#ccc" : theme.accent,
                           color: "#fff",
                           border: "none",
                           fontWeight: 700,
@@ -950,8 +1033,12 @@ const BerlinPage = () => {
                           fontSize: "1rem",
                         }}
                       >
-                        {stkStatus === "pending"
+                        {isPaying
                           ? "PROCESSING PAYMENT..."
+                          : isEmailing
+                          ? "SENDING EMAIL..."
+                          : stkStatus === "pending"
+                          ? "AWAITING PAYMENT..."
                           : "CONFIRM & PAY"}
                       </button>
 
@@ -964,6 +1051,17 @@ const BerlinPage = () => {
                           }}
                         >
                           Please check your phone to complete payment
+                        </div>
+                      )}
+                      {error && (
+                        <div
+                          style={{
+                            marginTop: "16px",
+                            color: "#d32f2f",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {error}
                         </div>
                       )}
                     </div>

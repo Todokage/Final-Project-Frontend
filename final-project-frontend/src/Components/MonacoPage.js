@@ -2,67 +2,63 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-// Monaco-themed color scheme 
+// Monaco color theme 
 const theme = {
-  primary: "#1a3a6e", // Deep blue
-  secondary: "#c0a080", // Gold/sand
-  accent: "#d4af37", // Metallic gold
-  accent2: "#e6e6fa", // Lavender
-  bg: "#f8f8ff", // Ghost white background
-  card: "#ffffff", // White cards
-  border: "#e0e0e0", // Light gray border
-  shadow: "rgba(0,0,0,0.15)",
-  text: "#333", // Dark text
-  lightText: "#888", // Light text
+  primary: "#003366",
+  secondary: "#1a3a6e",
+  accent: "#D4AF37", 
+  accent2: "#B8860B", 
+  bg: "#f8f9fa",
+  card: "#ffffff",
+  border: "#e0e0e0",
+  shadow: "rgba(0,0,0,0.1)",
+  text: "#333",
+  lightText: "#666",
 };
 
-const EUR_TO_KES = 150; // Euro to KSH conversion
+const EUR_TO_KES = 140;
 
 const hotels = [
   {
-    id: 1,
     name: "Hôtel de Paris Monte-Carlo",
     description:
-      "Iconic luxury hotel with private beach access and Michelin-star dining",
-    price: 800 * EUR_TO_KES,
+      "Legendary luxury hotel with private beach access and Michelin-starred dining",
+    price: 1200 * EUR_TO_KES,
     images: [
       "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
       "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["Luxury", "Beachfront", "5-Star"],
+    tags: ["Luxury", "Beachfront", "Michelin"],
   },
   {
-    id: 2,
     name: "Monte-Carlo Bay Hotel & Resort",
-    description:
-      "Elegant resort with lagoon-style pool and Mediterranean gardens",
-    price: 500 * EUR_TO_KES,
+    description: "Contemporary resort with lagoon and panoramic Mediterranean views",
+    price: 850 * EUR_TO_KES,
     images: [
       "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["Resort", "Lagoon", "Luxury"],
+    tags: ["Resort", "Lagoon", "Spa"],
   },
 ];
 
 const slides = [
   {
-    id: 1,
     title: "Monte Carlo Casino",
     image:
-      "https://images.unsplash.com/photo-1596436889106-be35e843f974?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "The legendary Belle Époque casino that defines Monaco's glamour",
+      "https://images.unsplash.com/photo-1590664553341-9d4b1a4c1a1a?auto=format&fit=crop&w=1200&q=80",
+    description: "Iconic Belle Époque casino and opera house",
   },
   {
-    id: 2,
     title: "Port Hercules",
     image:
-      "https://images.unsplash.com/photo-1583423230902-0d5436a5cf4e?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "The iconic marina filled with superyachts in the heart of Monaco",
+      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=80",
+    description: "Luxury yacht harbor during the Monaco Grand Prix",
   },
 ];
+
+// Backend URL for integration
+const BACKEND_URL = "http://localhost:5000";
 
 const MonacoPage = () => {
   const navigate = useNavigate();
@@ -80,8 +76,12 @@ const MonacoPage = () => {
   });
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [stkStatus, setStkStatus] = useState(null);
+  const [isPaying, setIsPaying] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  const [error, setError] = useState(null);
   const navbarRef = useRef(null);
   const [showHomeBtn, setShowHomeBtn] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Scroll effects
   useEffect(() => {
@@ -89,6 +89,7 @@ const MonacoPage = () => {
       if (!navbarRef.current) return;
       const navbarBottom = navbarRef.current.getBoundingClientRect().bottom;
       setShowHomeBtn(navbarBottom < 0);
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -103,10 +104,8 @@ const MonacoPage = () => {
         setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
       }, 3500);
     }
-    return () => {
-      if (imgInterval) clearInterval(imgInterval);
-    };
-  }, [modalHotel]);
+    return () => clearInterval(imgInterval);
+  }, [modalHotel, modalHotel?.images.length]);
 
   // Slide rotation
   useEffect(() => {
@@ -117,14 +116,12 @@ const MonacoPage = () => {
   }, []);
 
   const handlePrevImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx(
       (prev) => (prev - 1 + modalHotel.images.length) % modalHotel.images.length
     );
   };
 
   const handleNextImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
   };
 
@@ -137,17 +134,87 @@ const MonacoPage = () => {
     ? modalHotel.price * (parseInt(bookingForm.guests, 10) || 1)
     : 0;
 
-  const simulateSTKPush = () => {
+  const initiateSTKPush = async () => {
+    setIsPaying(true);
+    setError(null);
     setStkStatus("pending");
-    setTimeout(() => {
-      setStkStatus("success");
-      setBookingSuccess(true);
-    }, 2000);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/mpesa/stkpush`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: bookingForm.phone,
+          amount: totalPrice,
+          accountReference: "MonacoHotel",
+          transactionDesc: `Booking for ${bookingForm.name}`,
+        }),
+      });
+      const data = await res.json();
+      if (data.ResponseCode === "0") {
+        setStkStatus("pending");
+        return true;
+      } else {
+        setError(
+          data.errorMessage ||
+            "Failed to initiate payment. Please check your phone number."
+        );
+        setStkStatus(null);
+        return false;
+      }
+    } catch (err) {
+      setError("Network error during payment.");
+      setStkStatus(null);
+      return false;
+    } finally {
+      setIsPaying(false);
+    }
   };
 
-  const handleBookingSubmit = (e) => {
+  const sendBookingEmail = async () => {
+    setIsEmailing(true);
+    setError(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/email/booking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: bookingForm.email,
+          subject: "Monaco Hotel Booking Confirmation",
+          text: `Dear ${bookingForm.name},\n\nYour booking at Monaco Hotel is confirmed.\nCheck-in: ${bookingForm.checkIn}\nCheck-out: ${bookingForm.checkOut}\nGuests: ${bookingForm.guests}\nTotal: KES ${totalPrice}\n\nThank you!`,
+          html: `<p>Dear ${bookingForm.name},</p>
+            <p>Your booking at <b>Monaco Hotel</b> is confirmed.</p>
+            <ul>
+              <li>Check-in: ${bookingForm.checkIn}</li>
+              <li>Check-out: ${bookingForm.checkOut}</li>
+              <li>Guests: ${bookingForm.guests}</li>
+              <li>Total: <b>KES ${totalPrice}</b></li>
+            </ul>
+            <p>Thank you!</p>`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBookingSuccess(true);
+      } else {
+        setError("Failed to send confirmation email.");
+      }
+    } catch (err) {
+      setError("Network error during email sending.");
+    } finally {
+      setIsEmailing(false);
+    }
+  };
+
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    simulateSTKPush();
+    setBookingSuccess(false);
+    setError(null);
+
+    const paymentOk = await initiateSTKPush();
+    if (!paymentOk) return;
+
+    await sendBookingEmail();
+    setStkStatus(null);
   };
 
   return (
@@ -160,7 +227,7 @@ const MonacoPage = () => {
         overflowX: "hidden",
       }}
     >
-      {/* Luxurious Hero Section with Mediterranean aesthetic */}
+      {/* Hero Section with Mediterranean feel */}
       <div
         ref={navbarRef}
         style={{
@@ -177,8 +244,8 @@ const MonacoPage = () => {
         }}
       >
         <img
-          src={slides[currentSlide]?.image}
-          alt={slides[currentSlide]?.title || "Monaco"}
+          src={slides[currentSlide].image}
+          alt={slides[currentSlide].title}
           style={{
             position: "absolute",
             width: "100%",
@@ -208,7 +275,8 @@ const MonacoPage = () => {
               color: theme.accent,
               letterSpacing: "-0.03em",
               marginBottom: "1rem",
-              textShadow: "3px 3px 0 rgba(0,0,0,0.3)",
+              textTransform: "uppercase",
+              textShadow: "3px 3px 0 rgba(0,0,0,0.2)",
             }}
           >
             MONACO
@@ -225,7 +293,7 @@ const MonacoPage = () => {
               letterSpacing: "0.1em",
             }}
           >
-            {slides[currentSlide]?.title}
+            {slides[currentSlide].title}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -240,7 +308,7 @@ const MonacoPage = () => {
               textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
             }}
           >
-            {slides[currentSlide]?.description}
+            {slides[currentSlide].description}
           </motion.p>
         </div>
 
@@ -256,9 +324,9 @@ const MonacoPage = () => {
             zIndex: 10,
           }}
         >
-          {slides.map((slide, idx) => (
+          {slides.map((_, idx) => (
             <button
-              key={slide.id}
+              key={idx}
               onClick={() => setCurrentSlide(idx)}
               style={{
                 width: "12px",
@@ -270,7 +338,7 @@ const MonacoPage = () => {
                 transition: "all 0.3s ease",
                 transform: idx === currentSlide ? "scale(1.3)" : "scale(1)",
               }}
-              aria-label={`Go to ${slide.title}`}
+              aria-label={`Go to slide ${idx + 1}`}
             />
           ))}
         </div>
@@ -286,8 +354,8 @@ const MonacoPage = () => {
             position: "fixed",
             top: "24px",
             left: "24px",
-            background: theme.accent,
-            color: "#fff",
+            background: theme.primary,
+            color: theme.accent,
             border: "none",
             padding: "12px 24px",
             fontSize: "1rem",
@@ -306,7 +374,7 @@ const MonacoPage = () => {
         </motion.button>
       )}
 
-      {/* Hotel Cards Section */}
+      {/* Luxury Hotel Cards Section */}
       <section
         style={{
           width: "100%",
@@ -333,7 +401,7 @@ const MonacoPage = () => {
             transform: "translateX(-50%)",
           }}
         >
-          Luxury Accommodations
+          Luxury Hotels
           <span
             style={{
               position: "absolute",
@@ -356,7 +424,7 @@ const MonacoPage = () => {
         >
           {hotels.map((hotel) => (
             <motion.div
-              key={hotel.id}
+              key={hotel.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -410,7 +478,7 @@ const MonacoPage = () => {
                         key={tag}
                         style={{
                           background: theme.accent,
-                          color: "#fff",
+                          color: theme.primary,
                           padding: "4px 12px",
                           fontSize: "0.8rem",
                           fontWeight: 600,
@@ -475,7 +543,7 @@ const MonacoPage = () => {
                         color: theme.lightText,
                         fontWeight: 400,
                       }}
-                      >
+                    >
                       /night
                     </span>
                   </div>
@@ -489,7 +557,7 @@ const MonacoPage = () => {
                     }}
                     style={{
                       background: theme.primary,
-                      color: "#fff",
+                      color: theme.accent,
                       border: "none",
                       padding: "12px 24px",
                       fontWeight: 700,
@@ -499,6 +567,7 @@ const MonacoPage = () => {
                       alignItems: "center",
                       gap: "8px",
                     }}
+                    whileHover={{ background: theme.secondary }}
                   >
                     <span>BOOK NOW</span>
                     <span style={{ fontSize: "1.2rem" }}>→</span>
@@ -510,7 +579,7 @@ const MonacoPage = () => {
         </div>
       </section>
 
-      {/* Hotel Booking Modal */}
+      {/* Luxury Modal */}
       {modalHotel && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -550,7 +619,7 @@ const MonacoPage = () => {
                 top: "20px",
                 right: "20px",
                 background: theme.accent,
-                color: "#fff",
+                color: theme.primary,
                 border: "none",
                 width: "40px",
                 height: "40px",
@@ -562,7 +631,6 @@ const MonacoPage = () => {
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              aria-label="Close modal"
             >
               ×
             </button>
@@ -585,7 +653,7 @@ const MonacoPage = () => {
               >
                 <img
                   src={modalHotel.images[modalImageIdx]}
-                  alt={modalHotel.name}
+                  alt=""
                   style={{
                     width: "100%",
                     height: "100%",
@@ -601,7 +669,7 @@ const MonacoPage = () => {
                     left: "20px",
                     transform: "translateY(-50%)",
                     background: "rgba(0,0,0,0.5)",
-                    color: "#fff",
+                    color: theme.accent,
                     border: "none",
                     width: "40px",
                     height: "40px",
@@ -611,7 +679,6 @@ const MonacoPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Previous image"
                 >
                   ←
                 </button>
@@ -624,7 +691,7 @@ const MonacoPage = () => {
                     right: "20px",
                     transform: "translateY(-50%)",
                     background: "rgba(0,0,0,0.5)",
-                    color: "#fff",
+                    color: theme.accent,
                     border: "none",
                     width: "40px",
                     height: "40px",
@@ -634,7 +701,6 @@ const MonacoPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Next image"
                 >
                   →
                 </button>
@@ -664,7 +730,6 @@ const MonacoPage = () => {
                         cursor: "pointer",
                         padding: 0,
                       }}
-                      aria-label={`View image ${i + 1}`}
                     />
                   ))}
                 </div>
@@ -739,7 +804,7 @@ const MonacoPage = () => {
                         width: "100%",
                         padding: "16px",
                         background: theme.primary,
-                        color: "#fff",
+                        color: theme.accent,
                         border: "none",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -765,7 +830,6 @@ const MonacoPage = () => {
                     >
                       <div>
                         <label
-                          htmlFor="name"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -777,7 +841,6 @@ const MonacoPage = () => {
                         </label>
                         <input
                           type="text"
-                          id="name"
                           name="name"
                           value={bookingForm.name}
                           onChange={handleBookingChange}
@@ -790,7 +853,7 @@ const MonacoPage = () => {
                           }}
                         />
                       </div>
-
+                      
                       <div>
                         <label
                           htmlFor="email"
@@ -821,7 +884,6 @@ const MonacoPage = () => {
 
                       <div>
                         <label
-                          htmlFor="phone"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -833,7 +895,6 @@ const MonacoPage = () => {
                         </label>
                         <input
                           type="tel"
-                          id="phone"
                           name="phone"
                           value={bookingForm.phone}
                           onChange={handleBookingChange}
@@ -849,7 +910,6 @@ const MonacoPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkIn"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -861,7 +921,6 @@ const MonacoPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkIn"
                           name="checkIn"
                           value={bookingForm.checkIn}
                           onChange={handleBookingChange}
@@ -877,7 +936,6 @@ const MonacoPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkOut"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -889,7 +947,6 @@ const MonacoPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkOut"
                           name="checkOut"
                           value={bookingForm.checkOut}
                           onChange={handleBookingChange}
@@ -905,7 +962,6 @@ const MonacoPage = () => {
 
                       <div>
                         <label
-                          htmlFor="guests"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -917,7 +973,6 @@ const MonacoPage = () => {
                         </label>
                         <input
                           type="number"
-                          id="guests"
                           name="guests"
                           min="1"
                           max="10"
@@ -954,13 +1009,13 @@ const MonacoPage = () => {
 
                       <button
                         type="submit"
-                        disabled={stkStatus === "pending"}
+                        disabled={stkStatus === "pending" || isPaying || isEmailing}
                         style={{
                           width: "100%",
                           padding: "16px",
                           background:
-                            stkStatus === "pending" ? "#ccc" : theme.accent,
-                          color: "#fff",
+                            stkStatus === "pending" || isPaying || isEmailing ? "#ccc" : theme.accent,
+                          color: theme.primary,
                           border: "none",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -968,8 +1023,12 @@ const MonacoPage = () => {
                           fontSize: "1rem",
                         }}
                       >
-                        {stkStatus === "pending"
+                        {isPaying
                           ? "PROCESSING PAYMENT..."
+                          : isEmailing
+                          ? "SENDING EMAIL..."
+                          : stkStatus === "pending"
+                          ? "AWAITING PAYMENT..."
                           : "CONFIRM & PAY"}
                       </button>
 
@@ -982,6 +1041,17 @@ const MonacoPage = () => {
                           }}
                         >
                           Please check your phone to complete payment
+                        </div>
+                      )}
+                      {error && (
+                        <div
+                          style={{
+                            marginTop: "16px",
+                            color: "#d32f2f",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {error}
                         </div>
                       )}
                     </div>
@@ -1029,7 +1099,7 @@ const MonacoPage = () => {
                       style={{
                         padding: "16px 32px",
                         background: theme.primary,
-                        color: "#fff",
+                        color: theme.accent,
                         border: "none",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -1046,6 +1116,34 @@ const MonacoPage = () => {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Global Styles */}
+      <style>
+        {`
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          body {
+            overflow-x: hidden;
+          }
+          button {
+            transition: all 0.3s ease;
+          }
+          button:hover {
+            opacity: 0.9;
+          }
+          input, textarea {
+            transition: all 0.3s ease;
+          }
+          input:focus, textarea:focus {
+            outline: none;
+            border-color: ${theme.accent} !important;
+            box-shadow: 0 0 0 2px ${theme.accent}33;
+          }
+        `}
+      </style>
     </div>
   );
 };

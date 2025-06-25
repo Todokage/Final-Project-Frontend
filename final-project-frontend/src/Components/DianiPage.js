@@ -2,44 +2,39 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-// Diani-themed color scheme
+// Diani color theme 
 const theme = {
-  primary: "#1a3a32",
-  secondary: "#2d6a4f",
-  accent: "#52b788",
-  accent2: "#95d5b2",
-  bg: "#f8f9fa",
+  primary: "#0a5c36",
+  secondary: "#1a7a4a",
+  accent: "#ff7e33",
+  accent2: "#ffb347",
+  bg: "#f5f9f7",
   card: "#ffffff",
-  border: "#e0e0e0",
-  shadow: "rgba(0,0,0,0.15)",
+  border: "#d4e8de",
+  shadow: "rgba(0,0,0,0.1)",
   text: "#333",
-  lightText: "#888",
+  lightText: "#666",
 };
-
-const USD_TO_KES = 140;
 
 const hotels = [
   {
-    id: 1,
     name: "Diani Sea Resort",
     description:
-      "Beachfront luxury with stunning ocean views and Swahili-inspired architecture",
-    price: 180 * USD_TO_KES,
+      "Luxury beachfront resort with private beach access and spa facilities",
+    price: 25000,
     images: [
-      "https://images.unsplash.com/photo-1563911302283-d2bc129e7570?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-      "https://images.unsplash.com/photo-1587330979470-3595ac045ab0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["Beachfront", "Luxury", "Spa"],
+    tags: ["Luxury", "Beachfront", "Spa"],
   },
   {
-    id: 2,
     name: "Baobab Beach Resort",
-    description:
-      "Family-friendly resort with water sports and tropical gardens",
-    price: 150 * USD_TO_KES,
+    description: "Family-friendly resort with water sports and entertainment",
+    price: 18000,
     images: [
-      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80",
     ],
     tags: ["Family", "All-Inclusive", "Activities"],
   },
@@ -47,22 +42,22 @@ const hotels = [
 
 const slides = [
   {
-    id: 1,
     title: "Diani Beach",
     image:
-      "https://images.unsplash.com/photo-1563911302283-d2bc129e7570?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    description:
-      "Pristine white sands and turquoise waters of Kenya's premier beach destination",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+    description: "Pristine white sands and turquoise waters of the Indian Ocean",
   },
   {
-    id: 2,
     title: "Colobus Conservation",
     image:
-      "https://images.unsplash.com/photo-1587330979470-3595ac045ab0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80",
     description:
-      "See the endangered Angolan colobus monkeys in their natural habitat",
+      "Sanctuary for the endangered Angolan colobus monkey and other wildlife",
   },
 ];
+
+// Backend URL for integration
+const BACKEND_URL = "http://localhost:3000"; 
 
 const DianiPage = () => {
   const navigate = useNavigate();
@@ -80,8 +75,12 @@ const DianiPage = () => {
   });
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [stkStatus, setStkStatus] = useState(null);
+  const [isPaying, setIsPaying] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  const [error, setError] = useState(null);
   const navbarRef = useRef(null);
   const [showHomeBtn, setShowHomeBtn] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Scroll effects
   useEffect(() => {
@@ -89,6 +88,7 @@ const DianiPage = () => {
       if (!navbarRef.current) return;
       const navbarBottom = navbarRef.current.getBoundingClientRect().bottom;
       setShowHomeBtn(navbarBottom < 0);
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -103,10 +103,8 @@ const DianiPage = () => {
         setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
       }, 3500);
     }
-    return () => {
-      if (imgInterval) clearInterval(imgInterval);
-    };
-  }, [modalHotel]);
+    return () => clearInterval(imgInterval);
+  }, [modalHotel, modalHotel?.images.length]);
 
   // Slide rotation
   useEffect(() => {
@@ -117,14 +115,12 @@ const DianiPage = () => {
   }, []);
 
   const handlePrevImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx(
       (prev) => (prev - 1 + modalHotel.images.length) % modalHotel.images.length
     );
   };
 
   const handleNextImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
   };
 
@@ -137,17 +133,94 @@ const DianiPage = () => {
     ? modalHotel.price * (parseInt(bookingForm.guests, 10) || 1)
     : 0;
 
-  const simulateSTKPush = () => {
+  // MPESA STK Push Integration
+  const initiateSTKPush = async () => {
+    setIsPaying(true);
+    setError(null);
     setStkStatus("pending");
-    setTimeout(() => {
-      setStkStatus("success");
-      setBookingSuccess(true);
-    }, 2000);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/mpesa/stkpush`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: bookingForm.phone,
+          amount: totalPrice,
+          accountReference: "DianiHotel",
+          transactionDesc: `Booking for ${bookingForm.name}`,
+        }),
+      });
+      const data = await res.json();
+      if (data.ResponseCode === "0") {
+        setStkStatus("pending");
+        return true;
+      } else {
+        setError(
+          data.errorMessage ||
+            "Failed to initiate payment. Please check your phone number."
+        );
+        setStkStatus(null);
+        return false;
+      }
+    } catch (err) {
+      setError("Network error during payment.");
+      setStkStatus(null);
+      return false;
+    } finally {
+      setIsPaying(false);
+    }
   };
 
-  const handleBookingSubmit = (e) => {
+  //  Email Integration 
+  const sendBookingEmail = async () => {
+    setIsEmailing(true);
+    setError(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/email/booking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: bookingForm.email,
+          subject: "Diani Hotel Booking Confirmation",
+          text: `Dear ${bookingForm.name},\n\nYour booking at Diani Hotel is confirmed.\nCheck-in: ${bookingForm.checkIn}\nCheck-out: ${bookingForm.checkOut}\nGuests: ${bookingForm.guests}\nTotal: KES ${totalPrice}\n\nThank you!`,
+          html: `<p>Dear ${bookingForm.name},</p>
+            <p>Your booking at <b>Diani Hotel</b> is confirmed.</p>
+            <ul>
+              <li>Check-in: ${bookingForm.checkIn}</li>
+              <li>Check-out: ${bookingForm.checkOut}</li>
+              <li>Guests: ${bookingForm.guests}</li>
+              <li>Total: <b>KES ${totalPrice}</b></li>
+            </ul>
+            <p>Thank you!</p>`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBookingSuccess(true);
+      } else {
+        setError("Failed to send confirmation email.");
+      }
+    } catch (err) {
+      setError("Network error during email sending.");
+    } finally {
+      setIsEmailing(false);
+    }
+  };
+
+  //  Booking Submit Handler 
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    simulateSTKPush();
+    setBookingSuccess(false);
+    setError(null);
+
+    //  Initiate MPESA STK Push
+    const paymentOk = await initiateSTKPush();
+    if (!paymentOk) return;
+
+ 
+
+    //  Send confirmation email
+    await sendBookingEmail();
+    setStkStatus(null);
   };
 
   return (
@@ -160,7 +233,7 @@ const DianiPage = () => {
         overflowX: "hidden",
       }}
     >
-      {/* Tropical Hero Section */}
+      {/* Beachy Hero Section with Diagonal Cut */}
       <div
         ref={navbarRef}
         style={{
@@ -177,15 +250,15 @@ const DianiPage = () => {
         }}
       >
         <img
-          src={slides[currentSlide]?.image}
-          alt={slides[currentSlide]?.title || "Diani Beach"}
+          src={slides[currentSlide].image}
+          alt={slides[currentSlide].title}
           style={{
             position: "absolute",
             width: "100%",
             height: "100%",
             objectFit: "cover",
             opacity: 0.4,
-            filter: "brightness(0.9) contrast(110%)",
+            filter: "contrast(120%) saturate(120%)",
           }}
         />
 
@@ -226,7 +299,7 @@ const DianiPage = () => {
               letterSpacing: "0.1em",
             }}
           >
-            {slides[currentSlide]?.title}
+            {slides[currentSlide].title}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -241,7 +314,7 @@ const DianiPage = () => {
               textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
             }}
           >
-            {slides[currentSlide]?.description}
+            {slides[currentSlide].description}
           </motion.p>
         </div>
 
@@ -257,9 +330,9 @@ const DianiPage = () => {
             zIndex: 10,
           }}
         >
-          {slides.map((slide, idx) => (
+          {slides.map((_, idx) => (
             <button
-              key={slide.id}
+              key={idx}
               onClick={() => setCurrentSlide(idx)}
               style={{
                 width: "12px",
@@ -271,7 +344,7 @@ const DianiPage = () => {
                 transition: "all 0.3s ease",
                 transform: idx === currentSlide ? "scale(1.3)" : "scale(1)",
               }}
-              aria-label={`Go to slide ${slide.title}`}
+              aria-label={`Go to slide ${idx + 1}`}
             />
           ))}
         </div>
@@ -307,7 +380,7 @@ const DianiPage = () => {
         </motion.button>
       )}
 
-      {/* Beach Resort Cards Section */}
+      {/* Resort Cards Section */}
       <section
         style={{
           width: "100%",
@@ -357,7 +430,7 @@ const DianiPage = () => {
         >
           {hotels.map((hotel) => (
             <motion.div
-              key={hotel.id}
+              key={hotel.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -476,7 +549,7 @@ const DianiPage = () => {
                         color: theme.lightText,
                         fontWeight: 400,
                       }}
-                      >
+                    >
                       /night
                     </span>
                   </div>
@@ -500,6 +573,7 @@ const DianiPage = () => {
                       alignItems: "center",
                       gap: "8px",
                     }}
+                    whileHover={{ background: theme.accent }}
                   >
                     <span>BOOK NOW</span>
                     <span style={{ fontSize: "1.2rem" }}>→</span>
@@ -511,7 +585,7 @@ const DianiPage = () => {
         </div>
       </section>
 
-      {/* Resort Booking Modal */}
+      {/* Modern Modal */}
       {modalHotel && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -563,7 +637,6 @@ const DianiPage = () => {
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              aria-label="Close modal"
             >
               ×
             </button>
@@ -586,7 +659,7 @@ const DianiPage = () => {
               >
                 <img
                   src={modalHotel.images[modalImageIdx]}
-                  alt={modalHotel.name}
+                  alt=""
                   style={{
                     width: "100%",
                     height: "100%",
@@ -612,7 +685,6 @@ const DianiPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Previous image"
                 >
                   ←
                 </button>
@@ -635,7 +707,6 @@ const DianiPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Next image"
                 >
                   →
                 </button>
@@ -665,7 +736,6 @@ const DianiPage = () => {
                         cursor: "pointer",
                         padding: 0,
                       }}
-                      aria-label={`View image ${i + 1}`}
                     />
                   ))}
                 </div>
@@ -764,9 +834,9 @@ const DianiPage = () => {
                         marginBottom: "24px",
                       }}
                     >
+                      
                       <div>
                         <label
-                          htmlFor="name"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -778,7 +848,6 @@ const DianiPage = () => {
                         </label>
                         <input
                           type="text"
-                          id="name"
                           name="name"
                           value={bookingForm.name}
                           onChange={handleBookingChange}
@@ -823,7 +892,6 @@ const DianiPage = () => {
 
                       <div>
                         <label
-                          htmlFor="phone"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -835,7 +903,6 @@ const DianiPage = () => {
                         </label>
                         <input
                           type="tel"
-                          id="phone"
                           name="phone"
                           value={bookingForm.phone}
                           onChange={handleBookingChange}
@@ -851,7 +918,6 @@ const DianiPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkIn"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -863,7 +929,6 @@ const DianiPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkIn"
                           name="checkIn"
                           value={bookingForm.checkIn}
                           onChange={handleBookingChange}
@@ -879,7 +944,6 @@ const DianiPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkOut"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -891,7 +955,6 @@ const DianiPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkOut"
                           name="checkOut"
                           value={bookingForm.checkOut}
                           onChange={handleBookingChange}
@@ -907,7 +970,6 @@ const DianiPage = () => {
 
                       <div>
                         <label
-                          htmlFor="guests"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -919,7 +981,6 @@ const DianiPage = () => {
                         </label>
                         <input
                           type="number"
-                          id="guests"
                           name="guests"
                           min="1"
                           max="10"
@@ -956,12 +1017,12 @@ const DianiPage = () => {
 
                       <button
                         type="submit"
-                        disabled={stkStatus === "pending"}
+                        disabled={stkStatus === "pending" || isPaying || isEmailing}
                         style={{
                           width: "100%",
                           padding: "16px",
                           background:
-                            stkStatus === "pending" ? "#ccc" : theme.accent,
+                            stkStatus === "pending" || isPaying || isEmailing ? "#ccc" : theme.accent,
                           color: "#fff",
                           border: "none",
                           fontWeight: 700,
@@ -970,8 +1031,12 @@ const DianiPage = () => {
                           fontSize: "1rem",
                         }}
                       >
-                        {stkStatus === "pending"
+                        {isPaying
                           ? "PROCESSING PAYMENT..."
+                          : isEmailing
+                          ? "SENDING EMAIL..."
+                          : stkStatus === "pending"
+                          ? "AWAITING PAYMENT..."
                           : "CONFIRM & PAY"}
                       </button>
 
@@ -984,6 +1049,17 @@ const DianiPage = () => {
                           }}
                         >
                           Please check your phone to complete payment
+                        </div>
+                      )}
+                      {error && (
+                        <div
+                          style={{
+                            marginTop: "16px",
+                            color: "#d32f2f",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {error}
                         </div>
                       )}
                     </div>
@@ -1048,6 +1124,34 @@ const DianiPage = () => {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Global Styles */}
+      <style>
+        {`
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          body {
+            overflow-x: hidden;
+          }
+          button {
+            transition: all 0.3s ease;
+          }
+          button:hover {
+            opacity: 0.9;
+          }
+          input, textarea {
+            transition: all 0.3s ease;
+          }
+          input:focus, textarea:focus {
+            outline: none;
+            border-color: ${theme.accent} !important;
+            box-shadow: 0 0 0 2px ${theme.accent}33;
+          }
+        `}
+      </style>
     </div>
   );
 };

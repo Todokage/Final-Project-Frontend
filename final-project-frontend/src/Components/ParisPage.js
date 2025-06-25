@@ -1,67 +1,61 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import AuthPage from "./AuthPage";
 import { motion } from "framer-motion";
 
-// Paris-themed color scheme
+// Paris color theme 
 const theme = {
-  primary: "#4b2e83", // Deep purple
-  secondary: "#b399d4", // Light purple
-  accent: "#9c27b0", // Vibrant purple
-  accent2: "#e1bee7", // Pale purple
-  bg: "#f3e5f5", // Very light purple background
-  card: "#ffffff", // White cards
-  border: "#d1c4e9", // Light purple border
+  primary: "#0a0a0a",
+  secondary: "#1a1a1a",
+  accent: "#4169e1", 
+  accent2: "#ffd700", 
+  bg: "#f0f0f0",
+  card: "#ffffff",
+  border: "#e0e0e0",
   shadow: "rgba(0,0,0,0.15)",
-  text: "#311b92", // Dark purple text
-  lightText: "#7e57c2", // Medium purple
+  text: "#333",
+  lightText: "#888",
 };
 
-const EUR_TO_KES = 150; // Euro to KSH conversion
+const EUR_TO_KES = 140;
 
 const hotels = [
   {
-    id: 1,
     name: "Hôtel Ritz Paris",
-    description:
-      "Legendary palace hotel overlooking Place Vendôme with world-class dining",
-    price: 1200 * EUR_TO_KES,
+    description: "Legendary luxury hotel on Place Vendôme with timeless Parisian elegance",
+    price: 35 * EUR_TO_KES,
     images: [
       "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
-    ],
-    tags: ["Palace", "Luxury", "5-Star"],
-  },
-  {
-    id: 2,
-    name: "Le Meurice",
-    description:
-      "Ducal residence-style hotel with views of Tuileries Garden and Eiffel Tower",
-    price: 900 * EUR_TO_KES,
-    images: [
-      "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80",
       "https://images.unsplash.com/photo-1522798514-97ceb8c4f1c8?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["Historic", "Elegant", "Michelin"],
+    tags: ["Luxury", "Historic", "5-Star"],
+  },
+  {
+    name: "Le Marais Hôtel",
+    description: "Chic boutique hotel in the heart of Paris's trendy Marais district",
+    price: 22 * EUR_TO_KES,
+    images: [
+      "https://images.unsplash.com/photo-1515542622106-78bda8af0f66?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1439130490301-25e322d88054?auto=format&fit=crop&w=800&q=80",
+    ],
+    tags: ["Boutique", "Trendy", "Central"],
   },
 ];
 
 const slides = [
   {
-    id: 1,
     title: "Eiffel Tower",
-    image:
-      "https://images.unsplash.com/photo-1431274172761-fca41d930114?auto=format&fit=crop&w=1200&q=80",
-    description: "The iconic iron tower that has become the symbol of Paris",
+    image: "https://images.unsplash.com/photo-1431274172761-fca41d930114?auto=format&fit=crop&w=1200&q=80",
+    description: "Iconic iron lattice tower offering breathtaking views of Paris",
   },
   {
-    id: 2,
     title: "Louvre Museum",
-    image:
-      "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80",
-    description: "The world's largest art museum and a historic monument",
+    image: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80",
+    description: "World's largest art museum and historic monument",
   },
 ];
+
+// Backend URL for integration
+const BACKEND_URL = "http://localhost:3000";
 
 const ParisPage = () => {
   const navigate = useNavigate();
@@ -79,10 +73,12 @@ const ParisPage = () => {
   });
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [stkStatus, setStkStatus] = useState(null);
-  const [showAuth, setShowAuth] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  const [error, setError] = useState(null);
   const navbarRef = useRef(null);
   const [showHomeBtn, setShowHomeBtn] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Scroll effects
   useEffect(() => {
@@ -90,6 +86,7 @@ const ParisPage = () => {
       if (!navbarRef.current) return;
       const navbarBottom = navbarRef.current.getBoundingClientRect().bottom;
       setShowHomeBtn(navbarBottom < 0);
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -104,10 +101,8 @@ const ParisPage = () => {
         setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
       }, 3500);
     }
-    return () => {
-      if (imgInterval) clearInterval(imgInterval);
-    };
-  }, [modalHotel]);
+    return () => clearInterval(imgInterval);
+  }, [modalHotel, modalHotel?.images.length]);
 
   // Slide rotation
   useEffect(() => {
@@ -118,14 +113,12 @@ const ParisPage = () => {
   }, []);
 
   const handlePrevImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx(
       (prev) => (prev - 1 + modalHotel.images.length) % modalHotel.images.length
     );
   };
 
   const handleNextImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
   };
 
@@ -138,26 +131,94 @@ const ParisPage = () => {
     ? modalHotel.price * (parseInt(bookingForm.guests, 10) || 1)
     : 0;
 
-  const simulateSTKPush = () => {
+  //  MPESA STK Push Integration 
+  const initiateSTKPush = async () => {
+    setIsPaying(true);
+    setError(null);
     setStkStatus("pending");
-    setTimeout(() => {
-      setStkStatus("success");
-      setBookingSuccess(true);
-    }, 2000);
-  };
-
-  const handleBookingSubmit = (e) => {
-    e.preventDefault();
-    if (!isAuthenticated) {
-      setShowAuth(true);
-      return;
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/mpesa/stkpush`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: bookingForm.phone,
+          amount: totalPrice,
+          accountReference: "ParisHotel",
+          transactionDesc: `Booking for ${bookingForm.name}`,
+        }),
+      });
+      const data = await res.json();
+      if (data.ResponseCode === "0") {
+        setStkStatus("pending");
+        return true;
+      } else {
+        setError(
+          data.errorMessage ||
+            "Failed to initiate payment. Please check your phone number."
+        );
+        setStkStatus(null);
+        return false;
+      }
+    } catch (err) {
+      setError("Network error during payment.");
+      setStkStatus(null);
+      return false;
+    } finally {
+      setIsPaying(false);
     }
-    simulateSTKPush();
   };
 
-  const handleAuthSuccess = () => {
-    setIsAuthenticated(true);
-    setShowAuth(false);
+  //  Email Integration 
+  const sendBookingEmail = async () => {
+    setIsEmailing(true);
+    setError(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/email/booking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: bookingForm.email,
+          subject: "Paris Hotel Booking Confirmation",
+          text: `Dear ${bookingForm.name},\n\nYour booking at Paris Hotel is confirmed.\nCheck-in: ${bookingForm.checkIn}\nCheck-out: ${bookingForm.checkOut}\nGuests: ${bookingForm.guests}\nTotal: KES ${totalPrice}\n\nThank you!`,
+          html: `<p>Dear ${bookingForm.name},</p>
+            <p>Your booking at <b>Paris Hotel</b> is confirmed.</p>
+            <ul>
+              <li>Check-in: ${bookingForm.checkIn}</li>
+              <li>Check-out: ${bookingForm.checkOut}</li>
+              <li>Guests: ${bookingForm.guests}</li>
+              <li>Total: <b>KES ${totalPrice}</b></li>
+            </ul>
+            <p>Thank you!</p>`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBookingSuccess(true);
+      } else {
+        setError("Failed to send confirmation email.");
+      }
+    } catch (err) {
+      setError("Network error during email sending.");
+    } finally {
+      setIsEmailing(false);
+    }
+  };
+
+  //  Booking Submit Handler 
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault();
+    setBookingSuccess(false);
+    setError(null);
+
+    // Initiate MPESA STK Push
+    const paymentOk = await initiateSTKPush();
+    if (!paymentOk) return;
+
+  
+
+    //  Send confirmation email
+    await sendBookingEmail();
+    setStkStatus(null);
   };
 
   return (
@@ -170,13 +231,13 @@ const ParisPage = () => {
         overflowX: "hidden",
       }}
     >
-      {/* Purple Hero Section */}
+      {/* Edgy Hero Section with Diagonal Cut */}
       <div
         ref={navbarRef}
         style={{
           width: "100%",
           minHeight: "80vh",
-          background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.accent} 100%)`,
+          background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -187,15 +248,15 @@ const ParisPage = () => {
         }}
       >
         <img
-          src={slides[currentSlide]?.image}
-          alt={slides[currentSlide]?.title || "Paris"}
+          src={slides[currentSlide].image}
+          alt={slides[currentSlide].title}
           style={{
             position: "absolute",
             width: "100%",
             height: "100%",
             objectFit: "cover",
             opacity: 0.4,
-            filter: "brightness(0.8) contrast(120%)",
+            filter: "grayscale(30%) contrast(120%)",
           }}
         />
 
@@ -215,10 +276,11 @@ const ParisPage = () => {
             style={{
               fontSize: "clamp(2.5rem, 8vw, 5rem)",
               fontWeight: 900,
-              color: theme.accent2,
+              color: "#fff",
               letterSpacing: "-0.03em",
               marginBottom: "1rem",
-              textShadow: "3px 3px 0 rgba(0,0,0,0.3)",
+              textTransform: "uppercase",
+              textShadow: "3px 3px 0 rgba(0,0,0,0.2)",
             }}
           >
             PARIS
@@ -235,7 +297,7 @@ const ParisPage = () => {
               letterSpacing: "0.1em",
             }}
           >
-            {slides[currentSlide]?.title}
+            {slides[currentSlide].title}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -250,7 +312,7 @@ const ParisPage = () => {
               textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
             }}
           >
-            {slides[currentSlide]?.description}
+            {slides[currentSlide].description}
           </motion.p>
         </div>
 
@@ -266,23 +328,21 @@ const ParisPage = () => {
             zIndex: 10,
           }}
         >
-          {slides.map((slide, idx) => (
+          {slides.map((_, idx) => (
             <button
-              key={slide.id}
+              key={idx}
               onClick={() => setCurrentSlide(idx)}
               style={{
                 width: "12px",
                 height: "12px",
                 background:
-                  idx === currentSlide
-                    ? theme.accent2
-                    : "rgba(255,255,255,0.3)",
+                  idx === currentSlide ? "#fff" : "rgba(255,255,255,0.3)",
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 transform: idx === currentSlide ? "scale(1.3)" : "scale(1)",
               }}
-              aria-label={`Go to ${slide.title}`}
+              aria-label={`Go to slide ${idx + 1}`}
             />
           ))}
         </div>
@@ -318,7 +378,7 @@ const ParisPage = () => {
         </motion.button>
       )}
 
-      {/* Hotel Cards Section */}
+      {/* Modern Hotel Cards Section */}
       <section
         style={{
           width: "100%",
@@ -345,7 +405,7 @@ const ParisPage = () => {
             transform: "translateX(-50%)",
           }}
         >
-          Palace Hotels
+          Hotels
           <span
             style={{
               position: "absolute",
@@ -368,7 +428,7 @@ const ParisPage = () => {
         >
           {hotels.map((hotel) => (
             <motion.div
-              key={hotel.id}
+              key={hotel.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -511,6 +571,7 @@ const ParisPage = () => {
                       alignItems: "center",
                       gap: "8px",
                     }}
+                    whileHover={{ background: theme.accent }}
                   >
                     <span>BOOK NOW</span>
                     <span style={{ fontSize: "1.2rem" }}>→</span>
@@ -522,7 +583,7 @@ const ParisPage = () => {
         </div>
       </section>
 
-      {/* Hotel Booking Modal */}
+      {/* Modern Modal */}
       {modalHotel && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -574,7 +635,6 @@ const ParisPage = () => {
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              aria-label="Close modal"
             >
               ×
             </button>
@@ -597,7 +657,7 @@ const ParisPage = () => {
               >
                 <img
                   src={modalHotel.images[modalImageIdx]}
-                  alt={modalHotel.name}
+                  alt=""
                   style={{
                     width: "100%",
                     height: "100%",
@@ -623,7 +683,6 @@ const ParisPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Previous image"
                 >
                   ←
                 </button>
@@ -646,7 +705,6 @@ const ParisPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Next image"
                 >
                   →
                 </button>
@@ -676,7 +734,6 @@ const ParisPage = () => {
                         cursor: "pointer",
                         padding: 0,
                       }}
-                      aria-label={`View image ${i + 1}`}
                     />
                   ))}
                 </div>
@@ -775,9 +832,9 @@ const ParisPage = () => {
                         marginBottom: "24px",
                       }}
                     >
+                      
                       <div>
                         <label
-                          htmlFor="name"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -789,7 +846,6 @@ const ParisPage = () => {
                         </label>
                         <input
                           type="text"
-                          id="name"
                           name="name"
                           value={bookingForm.name}
                           onChange={handleBookingChange}
@@ -802,6 +858,7 @@ const ParisPage = () => {
                           }}
                         />
                       </div>
+                      
                       <div>
                         <label
                           htmlFor="email"
@@ -830,9 +887,9 @@ const ParisPage = () => {
                         />
                       </div>
 
+
                       <div>
                         <label
-                          htmlFor="phone"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -844,7 +901,6 @@ const ParisPage = () => {
                         </label>
                         <input
                           type="tel"
-                          id="phone"
                           name="phone"
                           value={bookingForm.phone}
                           onChange={handleBookingChange}
@@ -860,7 +916,6 @@ const ParisPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkIn"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -872,7 +927,6 @@ const ParisPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkIn"
                           name="checkIn"
                           value={bookingForm.checkIn}
                           onChange={handleBookingChange}
@@ -888,7 +942,6 @@ const ParisPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkOut"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -900,7 +953,6 @@ const ParisPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkOut"
                           name="checkOut"
                           value={bookingForm.checkOut}
                           onChange={handleBookingChange}
@@ -916,7 +968,6 @@ const ParisPage = () => {
 
                       <div>
                         <label
-                          htmlFor="guests"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -928,7 +979,6 @@ const ParisPage = () => {
                         </label>
                         <input
                           type="number"
-                          id="guests"
                           name="guests"
                           min="1"
                           max="10"
@@ -965,12 +1015,12 @@ const ParisPage = () => {
 
                       <button
                         type="submit"
-                        disabled={stkStatus === "pending"}
+                        disabled={stkStatus === "pending" || isPaying || isEmailing}
                         style={{
                           width: "100%",
                           padding: "16px",
                           background:
-                            stkStatus === "pending" ? "#ccc" : theme.accent,
+                            stkStatus === "pending" || isPaying || isEmailing ? "#ccc" : theme.accent,
                           color: "#fff",
                           border: "none",
                           fontWeight: 700,
@@ -979,8 +1029,12 @@ const ParisPage = () => {
                           fontSize: "1rem",
                         }}
                       >
-                        {stkStatus === "pending"
+                        {isPaying
                           ? "PROCESSING PAYMENT..."
+                          : isEmailing
+                          ? "SENDING EMAIL..."
+                          : stkStatus === "pending"
+                          ? "AWAITING PAYMENT..."
                           : "CONFIRM & PAY"}
                       </button>
 
@@ -993,6 +1047,17 @@ const ParisPage = () => {
                           }}
                         >
                           Please check your phone to complete payment
+                        </div>
+                      )}
+                      {error && (
+                        <div
+                          style={{
+                            marginTop: "16px",
+                            color: "#d32f2f",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {error}
                         </div>
                       )}
                     </div>
@@ -1033,7 +1098,7 @@ const ParisPage = () => {
                       }}
                     >
                       Your reservation at {modalHotel.name} has been confirmed.
-                      A receipt has been sent to {bookingForm.email}. 
+                      A receipt has been sent to {bookingForm.email}
                     </p>
                     <button
                       onClick={() => setModalHotel(null)}
@@ -1058,60 +1123,33 @@ const ParisPage = () => {
         </motion.div>
       )}
 
-      {/* Auth Modal */}
-      {showAuth && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0,0,0,0.8)",
-            zIndex: 2000,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            style={{
-              background: theme.card,
-              width: "100%",
-              maxWidth: "400px",
-              padding: "40px",
-              position: "relative",
-              boxShadow: `0 0 0 2px ${theme.accent}`,
-            }}
-          >
-            <button
-              onClick={() => setShowAuth(false)}
-              style={{
-                position: "absolute",
-                top: "16px",
-                right: "16px",
-                background: "none",
-                border: "none",
-                fontSize: "1.5rem",
-                cursor: "pointer",
-                color: theme.text,
-              }}
-              aria-label="Close auth modal"
-            >
-              ×
-            </button>
-            <AuthPage
-              onClose={() => setShowAuth(false)}
-              onSuccess={handleAuthSuccess}
-            />
-          </motion.div>
-        </motion.div>
-      )}
+      {/* Global Styles */}
+      <style>
+        {`
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          body {
+            overflow-x: hidden;
+          }
+          button {
+            transition: all 0.3s ease;
+          }
+          button:hover {
+            opacity: 0.9;
+          }
+          input, textarea {
+            transition: all 0.3s ease;
+          }
+          input:focus, textarea:focus {
+            outline: none;
+            border-color: ${theme.accent} !important;
+            box-shadow: 0 0 0 2px ${theme.accent}33;
+          }
+        `}
+      </style>
     </div>
   );
 };

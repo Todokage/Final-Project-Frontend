@@ -2,66 +2,60 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-// NYC-themed color scheme 
+// New York color theme 
 const theme = {
-  primary: "#0038a8", // NYC Taxi Blue
-  secondary: "#ff6319", // NYC Subway Orange
-  accent: "#fccc0a", // NYC Taxi Yellow
-  accent2: "#6cbe45", // NYC Park Green
-  bg: "#f5f5f5", // Light gray background
-  card: "#ffffff", // White cards
-  border: "#e0e0e0", // Light gray border
+  primary: "#0a0a0a",
+  secondary: "#1a1a1a",
+  accent: "#ff4d4d",
+  accent2: "#3d7dff",
+  bg: "#f0f0f0",
+  card: "#ffffff",
+  border: "#e0e0e0",
   shadow: "rgba(0,0,0,0.15)",
-  text: "#333", // Dark text
-  lightText: "#888", // Light text
+  text: "#333",
+  lightText: "#888",
 };
 
-const USD_TO_KES = 150; // USD to Kenyan Shillings conversion
+const USD_TO_KES = 120;
 
 const hotels = [
   {
-    id: 1,
     name: "The Plaza Hotel",
-    description:
-      "Iconic 5-star hotel overlooking Central Park with luxurious suites",
-    price: 800 * USD_TO_KES,
+    description: "Iconic luxury hotel overlooking Central Park with timeless elegance",
+    price: 450 * USD_TO_KES,
     images: [
-      "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
       "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["Luxury", "Central Park", "Historic"],
+    tags: ["Luxury", "Historic", "Central Park"],
   },
   {
-    id: 2,
     name: "The Standard High Line",
-    description:
-      "Trendy hotel with rooftop bar and panoramic NYC skyline views",
-    price: 400 * USD_TO_KES,
+    description: "Trendy hotel with panoramic views of Manhattan and the Hudson River",
+    price: 300 * USD_TO_KES,
     images: [
-      "https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80",
       "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["Modern", "Skyline", "Trendy"],
+    tags: ["Modern", "Scenic", "Vibrant"],
   },
 ];
 
 const slides = [
   {
-    id: 1,
-    title: "Times Square",
-    image:
-      "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "The bustling heart of NYC with bright neon lights and Broadway theaters",
+    title: "Statue of Liberty",
+    image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1200&q=80",
+    description: "Iconic symbol of freedom and democracy in New York Harbor",
   },
   {
-    id: 2,
-    title: "Statue of Liberty",
-    image:
-      "https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=1200&q=80",
-    description: "America's iconic symbol of freedom in New York Harbor",
+    title: "Times Square",
+    image: "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=1200&q=80",
+    description: "The bustling heart of Manhattan with dazzling neon lights",
   },
 ];
+
+// Backend URL for integration
+const BACKEND_URL = "http://localhost:3000"; 
 
 const NewYorkPage = () => {
   const navigate = useNavigate();
@@ -79,8 +73,12 @@ const NewYorkPage = () => {
   });
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [stkStatus, setStkStatus] = useState(null);
+  const [isPaying, setIsPaying] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  const [error, setError] = useState(null);
   const navbarRef = useRef(null);
   const [showHomeBtn, setShowHomeBtn] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Scroll effects
   useEffect(() => {
@@ -88,6 +86,7 @@ const NewYorkPage = () => {
       if (!navbarRef.current) return;
       const navbarBottom = navbarRef.current.getBoundingClientRect().bottom;
       setShowHomeBtn(navbarBottom < 0);
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -102,10 +101,8 @@ const NewYorkPage = () => {
         setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
       }, 3500);
     }
-    return () => {
-      if (imgInterval) clearInterval(imgInterval);
-    };
-  }, [modalHotel]);
+    return () => clearInterval(imgInterval);
+  }, [modalHotel, modalHotel?.images.length]);
 
   // Slide rotation
   useEffect(() => {
@@ -116,14 +113,12 @@ const NewYorkPage = () => {
   }, []);
 
   const handlePrevImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx(
       (prev) => (prev - 1 + modalHotel.images.length) % modalHotel.images.length
     );
   };
 
   const handleNextImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
   };
 
@@ -136,17 +131,94 @@ const NewYorkPage = () => {
     ? modalHotel.price * (parseInt(bookingForm.guests, 10) || 1)
     : 0;
 
-  const simulateSTKPush = () => {
+  // --- MPESA STK Push Integration ---
+  const initiateSTKPush = async () => {
+    setIsPaying(true);
+    setError(null);
     setStkStatus("pending");
-    setTimeout(() => {
-      setStkStatus("success");
-      setBookingSuccess(true);
-    }, 2000);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/mpesa/stkpush`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: bookingForm.phone,
+          amount: totalPrice,
+          accountReference: "NYHotel",
+          transactionDesc: `Booking for ${bookingForm.name}`,
+        }),
+      });
+      const data = await res.json();
+      if (data.ResponseCode === "0") {
+        setStkStatus("pending");
+        return true;
+      } else {
+        setError(
+          data.errorMessage ||
+            "Failed to initiate payment. Please check your phone number."
+        );
+        setStkStatus(null);
+        return false;
+      }
+    } catch (err) {
+      setError("Network error during payment.");
+      setStkStatus(null);
+      return false;
+    } finally {
+      setIsPaying(false);
+    }
   };
 
-  const handleBookingSubmit = (e) => {
+  //  Email Integration
+  const sendBookingEmail = async () => {
+    setIsEmailing(true);
+    setError(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/email/booking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: bookingForm.email,
+          subject: "New York Hotel Booking Confirmation",
+          text: `Dear ${bookingForm.name},\n\nYour booking at New York Hotel is confirmed.\nCheck-in: ${bookingForm.checkIn}\nCheck-out: ${bookingForm.checkOut}\nGuests: ${bookingForm.guests}\nTotal: KES ${totalPrice}\n\nThank you!`,
+          html: `<p>Dear ${bookingForm.name},</p>
+            <p>Your booking at <b>New York Hotel</b> is confirmed.</p>
+            <ul>
+              <li>Check-in: ${bookingForm.checkIn}</li>
+              <li>Check-out: ${bookingForm.checkOut}</li>
+              <li>Guests: ${bookingForm.guests}</li>
+              <li>Total: <b>KES ${totalPrice}</b></li>
+            </ul>
+            <p>Thank you!</p>`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBookingSuccess(true);
+      } else {
+        setError("Failed to send confirmation email.");
+      }
+    } catch (err) {
+      setError("Network error during email sending.");
+    } finally {
+      setIsEmailing(false);
+    }
+  };
+
+  // Booking Submit Handler 
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    simulateSTKPush();
+    setBookingSuccess(false);
+    setError(null);
+
+    // Initiate MPESA STK Push
+    const paymentOk = await initiateSTKPush();
+    if (!paymentOk) return;
+
+   
+
+    // Send confirmation email
+    await sendBookingEmail();
+    setStkStatus(null);
   };
 
   return (
@@ -159,13 +231,13 @@ const NewYorkPage = () => {
         overflowX: "hidden",
       }}
     >
-      {/* Urban Hero Section with NYC aesthetic */}
+      {/* Edgy Hero Section with Diagonal Cut */}
       <div
         ref={navbarRef}
         style={{
           width: "100%",
           minHeight: "80vh",
-          background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)`,
+          background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -176,15 +248,15 @@ const NewYorkPage = () => {
         }}
       >
         <img
-          src={slides[currentSlide]?.image}
-          alt={slides[currentSlide]?.title || "New York"}
+          src={slides[currentSlide].image}
+          alt={slides[currentSlide].title}
           style={{
             position: "absolute",
             width: "100%",
             height: "100%",
             objectFit: "cover",
             opacity: 0.4,
-            filter: "brightness(0.8) contrast(120%)",
+            filter: "grayscale(30%) contrast(120%)",
           }}
         />
 
@@ -204,11 +276,11 @@ const NewYorkPage = () => {
             style={{
               fontSize: "clamp(2.5rem, 8vw, 5rem)",
               fontWeight: 900,
-              color: theme.accent,
+              color: "#fff",
               letterSpacing: "-0.03em",
               marginBottom: "1rem",
               textTransform: "uppercase",
-              textShadow: "3px 3px 0 rgba(0,0,0,0.3)",
+              textShadow: "3px 3px 0 rgba(0,0,0,0.2)",
             }}
           >
             NEW YORK
@@ -225,7 +297,7 @@ const NewYorkPage = () => {
               letterSpacing: "0.1em",
             }}
           >
-            {slides[currentSlide]?.title}
+            {slides[currentSlide].title}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -240,7 +312,7 @@ const NewYorkPage = () => {
               textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
             }}
           >
-            {slides[currentSlide]?.description}
+            {slides[currentSlide].description}
           </motion.p>
         </div>
 
@@ -256,21 +328,21 @@ const NewYorkPage = () => {
             zIndex: 10,
           }}
         >
-          {slides.map((slide, idx) => (
+          {slides.map((_, idx) => (
             <button
-              key={slide.id}
+              key={idx}
               onClick={() => setCurrentSlide(idx)}
               style={{
                 width: "12px",
                 height: "12px",
                 background:
-                  idx === currentSlide ? theme.accent : "rgba(255,255,255,0.3)",
+                  idx === currentSlide ? "#fff" : "rgba(255,255,255,0.3)",
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 transform: idx === currentSlide ? "scale(1.3)" : "scale(1)",
               }}
-              aria-label={`Go to ${slide.title}`}
+              aria-label={`Go to slide ${idx + 1}`}
             />
           ))}
         </div>
@@ -306,7 +378,7 @@ const NewYorkPage = () => {
         </motion.button>
       )}
 
-      {/* Hotel Cards Section */}
+      {/* Modern Hotel Cards Section */}
       <section
         style={{
           width: "100%",
@@ -333,7 +405,7 @@ const NewYorkPage = () => {
             transform: "translateX(-50%)",
           }}
         >
-          NYC Hotels
+          Hotels
           <span
             style={{
               position: "absolute",
@@ -356,7 +428,7 @@ const NewYorkPage = () => {
         >
           {hotels.map((hotel) => (
             <motion.div
-              key={hotel.id}
+              key={hotel.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -499,6 +571,7 @@ const NewYorkPage = () => {
                       alignItems: "center",
                       gap: "8px",
                     }}
+                    whileHover={{ background: theme.accent }}
                   >
                     <span>BOOK NOW</span>
                     <span style={{ fontSize: "1.2rem" }}>→</span>
@@ -510,7 +583,7 @@ const NewYorkPage = () => {
         </div>
       </section>
 
-      {/* Hotel Booking Modal */}
+      {/* Modern Modal */}
       {modalHotel && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -562,7 +635,6 @@ const NewYorkPage = () => {
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              aria-label="Close modal"
             >
               ×
             </button>
@@ -585,7 +657,7 @@ const NewYorkPage = () => {
               >
                 <img
                   src={modalHotel.images[modalImageIdx]}
-                  alt={modalHotel.name}
+                  alt=""
                   style={{
                     width: "100%",
                     height: "100%",
@@ -611,7 +683,6 @@ const NewYorkPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Previous image"
                 >
                   ←
                 </button>
@@ -634,7 +705,6 @@ const NewYorkPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Next image"
                 >
                   →
                 </button>
@@ -664,7 +734,6 @@ const NewYorkPage = () => {
                         cursor: "pointer",
                         padding: 0,
                       }}
-                      aria-label={`View image ${i + 1}`}
                     />
                   ))}
                 </div>
@@ -763,9 +832,9 @@ const NewYorkPage = () => {
                         marginBottom: "24px",
                       }}
                     >
+                      
                       <div>
                         <label
-                          htmlFor="name"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -777,7 +846,6 @@ const NewYorkPage = () => {
                         </label>
                         <input
                           type="text"
-                          id="name"
                           name="name"
                           value={bookingForm.name}
                           onChange={handleBookingChange}
@@ -790,7 +858,7 @@ const NewYorkPage = () => {
                           }}
                         />
                       </div>
-
+                      
                       <div>
                         <label
                           htmlFor="email"
@@ -819,9 +887,9 @@ const NewYorkPage = () => {
                         />
                       </div>
 
+
                       <div>
                         <label
-                          htmlFor="phone"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -833,7 +901,6 @@ const NewYorkPage = () => {
                         </label>
                         <input
                           type="tel"
-                          id="phone"
                           name="phone"
                           value={bookingForm.phone}
                           onChange={handleBookingChange}
@@ -849,7 +916,6 @@ const NewYorkPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkIn"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -861,7 +927,6 @@ const NewYorkPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkIn"
                           name="checkIn"
                           value={bookingForm.checkIn}
                           onChange={handleBookingChange}
@@ -877,7 +942,6 @@ const NewYorkPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkOut"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -889,7 +953,6 @@ const NewYorkPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkOut"
                           name="checkOut"
                           value={bookingForm.checkOut}
                           onChange={handleBookingChange}
@@ -905,7 +968,6 @@ const NewYorkPage = () => {
 
                       <div>
                         <label
-                          htmlFor="guests"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -917,7 +979,6 @@ const NewYorkPage = () => {
                         </label>
                         <input
                           type="number"
-                          id="guests"
                           name="guests"
                           min="1"
                           max="10"
@@ -954,12 +1015,12 @@ const NewYorkPage = () => {
 
                       <button
                         type="submit"
-                        disabled={stkStatus === "pending"}
+                        disabled={stkStatus === "pending" || isPaying || isEmailing}
                         style={{
                           width: "100%",
                           padding: "16px",
                           background:
-                            stkStatus === "pending" ? "#ccc" : theme.accent,
+                            stkStatus === "pending" || isPaying || isEmailing ? "#ccc" : theme.accent,
                           color: "#fff",
                           border: "none",
                           fontWeight: 700,
@@ -968,8 +1029,12 @@ const NewYorkPage = () => {
                           fontSize: "1rem",
                         }}
                       >
-                        {stkStatus === "pending"
+                        {isPaying
                           ? "PROCESSING PAYMENT..."
+                          : isEmailing
+                          ? "SENDING EMAIL..."
+                          : stkStatus === "pending"
+                          ? "AWAITING PAYMENT..."
                           : "CONFIRM & PAY"}
                       </button>
 
@@ -982,6 +1047,17 @@ const NewYorkPage = () => {
                           }}
                         >
                           Please check your phone to complete payment
+                        </div>
+                      )}
+                      {error && (
+                        <div
+                          style={{
+                            marginTop: "16px",
+                            color: "#d32f2f",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {error}
                         </div>
                       )}
                     </div>
@@ -1022,7 +1098,7 @@ const NewYorkPage = () => {
                       }}
                     >
                       Your reservation at {modalHotel.name} has been confirmed.
-                      A receipt has been sent to {bookingForm.email}.
+                      A receipt has been sent to {bookingForm.email}
                     </p>
                     <button
                       onClick={() => setModalHotel(null)}
@@ -1046,6 +1122,34 @@ const NewYorkPage = () => {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Global Styles */}
+      <style>
+        {`
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          body {
+            overflow-x: hidden;
+          }
+          button {
+            transition: all 0.3s ease;
+          }
+          button:hover {
+            opacity: 0.9;
+          }
+          input, textarea {
+            transition: all 0.3s ease;
+          }
+          input:focus, textarea:focus {
+            outline: none;
+            border-color: ${theme.accent} !important;
+            box-shadow: 0 0 0 2px ${theme.accent}33;
+          }
+        `}
+      </style>
     </div>
   );
 };

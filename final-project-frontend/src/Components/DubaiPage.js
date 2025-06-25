@@ -2,65 +2,58 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-// Dubai-themed color theme
+// Dubai  color theme 
 const theme = {
-  primary: "#0d4b6e", // Deep blue
-  secondary: "#d4a762", // Sand gold
-  accent: "#d4af37", // Gold
-  accent2: "#e6e6fa", // Lavender
-  bg: "#f8f8ff", // Ghost white background
-  card: "#ffffff", // White cards
-  border: "#e0e0e0", // Light gray border
-  shadow: "rgba(0,0,0,0.15)",
-  text: "#333", // Dark text
-  lightText: "#888", // Light text
+  primary: "#0e4d7a",
+  secondary: "#166ab7",
+  accent: "#d4af37", 
+  accent2: "#ffd700",
+  bg: "#f5f9ff",
+  card: "#ffffff",
+  border: "#d4e3f5",
+  shadow: "rgba(0,0,0,0.1)",
+  text: "#333",
+  lightText: "#666",
 };
-
-const AED_TO_KES = 30; // UAE  to KSH conversion
 
 const hotels = [
   {
-    id: 1,
-    name: "Burj Al Arab Jumeirah",
-    description:
-      "Iconic sail-shaped luxury hotel with private butler service and panoramic views",
-    price: 5000 * AED_TO_KES,
+    name: "Burj Al Arab",
+    description: "Iconic sail-shaped luxury hotel with butler service and private beach",
+    price: 45000,
     images: [
       "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1582719471386-8b8c0a9f0b1a?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1534214526114-0ea4a47b04e2?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["7-Star", "Luxury", "Beachfront"],
+    tags: ["Luxury", "Iconic", "7-Star"],
   },
   {
-    id: 2,
     name: "Atlantis The Palm",
-    description: "Aquatic-themed resort with waterpark and underwater suites",
-    price: 2500 * AED_TO_KES,
+    description: "Marine-themed resort with waterpark and underwater suites",
+    price: 32000,
     images: [
-      "https://images.unsplash.com/photo-1538964173425-93884d739596?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1582719471384-894e8b5ddfa9?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["Resort", "Waterpark", "Family"],
+    tags: ["Family", "Waterpark", "Marine"],
   },
 ];
 
 const slides = [
   {
-    id: 1,
-    title: "Burj Khalifa",
-    image:
-      "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=80",
-    description: "The world's tallest building at 828 meters in Downtown Dubai",
+    title: "Dubai Skyline",
+    image: "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=80",
+    description: "The futuristic skyline of Dubai with its iconic Burj Khalifa",
   },
   {
-    id: 2,
-    title: "The Dubai Fountain",
-    image:
-      "https://images.unsplash.com/photo-1582719471386-8b8c0a9f0b1a?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "World's largest choreographed fountain system set on the 30-acre Burj Khalifa Lake",
+    title: "Desert Safari",
+    image: "https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=1200&q=80",
+    description: "Experience the golden dunes of the Arabian desert",
   },
 ];
+
+// Backend URL for integration
+const BACKEND_URL = "http://localhost:3000";
 
 const DubaiPage = () => {
   const navigate = useNavigate();
@@ -78,8 +71,12 @@ const DubaiPage = () => {
   });
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [stkStatus, setStkStatus] = useState(null);
+  const [isPaying, setIsPaying] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  const [error, setError] = useState(null);
   const navbarRef = useRef(null);
   const [showHomeBtn, setShowHomeBtn] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Scroll effects
   useEffect(() => {
@@ -87,6 +84,7 @@ const DubaiPage = () => {
       if (!navbarRef.current) return;
       const navbarBottom = navbarRef.current.getBoundingClientRect().bottom;
       setShowHomeBtn(navbarBottom < 0);
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -101,10 +99,8 @@ const DubaiPage = () => {
         setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
       }, 3500);
     }
-    return () => {
-      if (imgInterval) clearInterval(imgInterval);
-    };
-  }, [modalHotel]);
+    return () => clearInterval(imgInterval);
+  }, [modalHotel, modalHotel?.images.length]);
 
   // Slide rotation
   useEffect(() => {
@@ -115,14 +111,12 @@ const DubaiPage = () => {
   }, []);
 
   const handlePrevImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx(
       (prev) => (prev - 1 + modalHotel.images.length) % modalHotel.images.length
     );
   };
 
   const handleNextImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
   };
 
@@ -135,17 +129,87 @@ const DubaiPage = () => {
     ? modalHotel.price * (parseInt(bookingForm.guests, 10) || 1)
     : 0;
 
-  const simulateSTKPush = () => {
+  const initiateSTKPush = async () => {
+    setIsPaying(true);
+    setError(null);
     setStkStatus("pending");
-    setTimeout(() => {
-      setStkStatus("success");
-      setBookingSuccess(true);
-    }, 2000);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/mpesa/stkpush`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: bookingForm.phone,
+          amount: totalPrice,
+          accountReference: "DubaiHotel",
+          transactionDesc: `Booking for ${bookingForm.name}`,
+        }),
+      });
+      const data = await res.json();
+      if (data.ResponseCode === "0") {
+        setStkStatus("pending");
+        return true;
+      } else {
+        setError(
+          data.errorMessage ||
+            "Failed to initiate payment. Please check your phone number."
+        );
+        setStkStatus(null);
+        return false;
+      }
+    } catch (err) {
+      setError("Network error during payment.");
+      setStkStatus(null);
+      return false;
+    } finally {
+      setIsPaying(false);
+    }
   };
 
-  const handleBookingSubmit = (e) => {
+  const sendBookingEmail = async () => {
+    setIsEmailing(true);
+    setError(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/email/booking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: bookingForm.email,
+          subject: "Dubai Hotel Booking Confirmation",
+          text: `Dear ${bookingForm.name},\n\nYour booking at Dubai Hotel is confirmed.\nCheck-in: ${bookingForm.checkIn}\nCheck-out: ${bookingForm.checkOut}\nGuests: ${bookingForm.guests}\nTotal: KES ${totalPrice}\n\nThank you!`,
+          html: `<p>Dear ${bookingForm.name},</p>
+            <p>Your booking at <b>${modalHotel.name}</b> is confirmed.</p>
+            <ul>
+              <li>Check-in: ${bookingForm.checkIn}</li>
+              <li>Check-out: ${bookingForm.checkOut}</li>
+              <li>Guests: ${bookingForm.guests}</li>
+              <li>Total: <b>KES ${totalPrice}</b></li>
+            </ul>
+            <p>Thank you!</p>`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBookingSuccess(true);
+      } else {
+        setError("Failed to send confirmation email.");
+      }
+    } catch (err) {
+      setError("Network error during email sending.");
+    } finally {
+      setIsEmailing(false);
+    }
+  };
+
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    simulateSTKPush();
+    setBookingSuccess(false);
+    setError(null);
+
+    const paymentOk = await initiateSTKPush();
+    if (!paymentOk) return;
+
+    await sendBookingEmail();
+    setStkStatus(null);
   };
 
   return (
@@ -158,7 +222,7 @@ const DubaiPage = () => {
         overflowX: "hidden",
       }}
     >
-      {/* Luxurious Hero Section with Dubai aesthetic */}
+      {/* Dubai Skyline Hero Section */}
       <div
         ref={navbarRef}
         style={{
@@ -175,15 +239,15 @@ const DubaiPage = () => {
         }}
       >
         <img
-          src={slides[currentSlide]?.image}
-          alt={slides[currentSlide]?.title || "Dubai"}
+          src={slides[currentSlide].image}
+          alt={slides[currentSlide].title}
           style={{
             position: "absolute",
             width: "100%",
             height: "100%",
             objectFit: "cover",
             opacity: 0.4,
-            filter: "brightness(0.8) contrast(120%)",
+            filter: "contrast(120%) saturate(120%)",
           }}
         />
 
@@ -203,10 +267,11 @@ const DubaiPage = () => {
             style={{
               fontSize: "clamp(2.5rem, 8vw, 5rem)",
               fontWeight: 900,
-              color: theme.accent,
+              color: theme.accent2,
               letterSpacing: "-0.03em",
               marginBottom: "1rem",
-              textShadow: "3px 3px 0 rgba(0,0,0,0.3)",
+              textTransform: "uppercase",
+              textShadow: "3px 3px 0 rgba(0,0,0,0.2)",
             }}
           >
             DUBAI
@@ -223,7 +288,7 @@ const DubaiPage = () => {
               letterSpacing: "0.1em",
             }}
           >
-            {slides[currentSlide]?.title}
+            {slides[currentSlide].title}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -238,7 +303,7 @@ const DubaiPage = () => {
               textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
             }}
           >
-            {slides[currentSlide]?.description}
+            {slides[currentSlide].description}
           </motion.p>
         </div>
 
@@ -254,21 +319,21 @@ const DubaiPage = () => {
             zIndex: 10,
           }}
         >
-          {slides.map((slide, idx) => (
+          {slides.map((_, idx) => (
             <button
-              key={slide.id}
+              key={idx}
               onClick={() => setCurrentSlide(idx)}
               style={{
                 width: "12px",
                 height: "12px",
                 background:
-                  idx === currentSlide ? theme.accent : "rgba(255,255,255,0.3)",
+                  idx === currentSlide ? theme.accent2 : "rgba(255,255,255,0.3)",
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 transform: idx === currentSlide ? "scale(1.3)" : "scale(1)",
               }}
-              aria-label={`Go to ${slide.title}`}
+              aria-label={`Go to slide ${idx + 1}`}
             />
           ))}
         </div>
@@ -284,7 +349,7 @@ const DubaiPage = () => {
             position: "fixed",
             top: "24px",
             left: "24px",
-            background: theme.accent,
+            background: theme.primary,
             color: "#fff",
             border: "none",
             padding: "12px 24px",
@@ -304,7 +369,7 @@ const DubaiPage = () => {
         </motion.button>
       )}
 
-      {/* Hotel Cards Section */}
+      {/* Luxury Hotels Section */}
       <section
         style={{
           width: "100%",
@@ -331,7 +396,7 @@ const DubaiPage = () => {
             transform: "translateX(-50%)",
           }}
         >
-          Luxury Accommodations
+          Luxury Hotels
           <span
             style={{
               position: "absolute",
@@ -354,7 +419,7 @@ const DubaiPage = () => {
         >
           {hotels.map((hotel) => (
             <motion.div
-              key={hotel.id}
+              key={hotel.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -497,6 +562,7 @@ const DubaiPage = () => {
                       alignItems: "center",
                       gap: "8px",
                     }}
+                    whileHover={{ background: theme.accent }}
                   >
                     <span>BOOK NOW</span>
                     <span style={{ fontSize: "1.2rem" }}>→</span>
@@ -508,7 +574,7 @@ const DubaiPage = () => {
         </div>
       </section>
 
-      {/* Hotel Booking Modal */}
+      {/* Modern Modal */}
       {modalHotel && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -560,7 +626,6 @@ const DubaiPage = () => {
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              aria-label="Close modal"
             >
               ×
             </button>
@@ -583,7 +648,7 @@ const DubaiPage = () => {
               >
                 <img
                   src={modalHotel.images[modalImageIdx]}
-                  alt={modalHotel.name}
+                  alt=""
                   style={{
                     width: "100%",
                     height: "100%",
@@ -609,7 +674,6 @@ const DubaiPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Previous image"
                 >
                   ←
                 </button>
@@ -632,7 +696,6 @@ const DubaiPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Next image"
                 >
                   →
                 </button>
@@ -662,7 +725,6 @@ const DubaiPage = () => {
                         cursor: "pointer",
                         padding: 0,
                       }}
-                      aria-label={`View image ${i + 1}`}
                     />
                   ))}
                 </div>
@@ -761,9 +823,9 @@ const DubaiPage = () => {
                         marginBottom: "24px",
                       }}
                     >
+                      
                       <div>
                         <label
-                          htmlFor="name"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -775,7 +837,6 @@ const DubaiPage = () => {
                         </label>
                         <input
                           type="text"
-                          id="name"
                           name="name"
                           value={bookingForm.name}
                           onChange={handleBookingChange}
@@ -820,7 +881,6 @@ const DubaiPage = () => {
 
                       <div>
                         <label
-                          htmlFor="phone"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -832,7 +892,6 @@ const DubaiPage = () => {
                         </label>
                         <input
                           type="tel"
-                          id="phone"
                           name="phone"
                           value={bookingForm.phone}
                           onChange={handleBookingChange}
@@ -848,7 +907,6 @@ const DubaiPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkIn"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -860,7 +918,6 @@ const DubaiPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkIn"
                           name="checkIn"
                           value={bookingForm.checkIn}
                           onChange={handleBookingChange}
@@ -876,7 +933,6 @@ const DubaiPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkOut"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -888,7 +944,6 @@ const DubaiPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkOut"
                           name="checkOut"
                           value={bookingForm.checkOut}
                           onChange={handleBookingChange}
@@ -904,7 +959,6 @@ const DubaiPage = () => {
 
                       <div>
                         <label
-                          htmlFor="guests"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -916,7 +970,6 @@ const DubaiPage = () => {
                         </label>
                         <input
                           type="number"
-                          id="guests"
                           name="guests"
                           min="1"
                           max="10"
@@ -953,12 +1006,12 @@ const DubaiPage = () => {
 
                       <button
                         type="submit"
-                        disabled={stkStatus === "pending"}
+                        disabled={stkStatus === "pending" || isPaying || isEmailing}
                         style={{
                           width: "100%",
                           padding: "16px",
                           background:
-                            stkStatus === "pending" ? "#ccc" : theme.accent,
+                            stkStatus === "pending" || isPaying || isEmailing ? "#ccc" : theme.accent,
                           color: "#fff",
                           border: "none",
                           fontWeight: 700,
@@ -967,8 +1020,12 @@ const DubaiPage = () => {
                           fontSize: "1rem",
                         }}
                       >
-                        {stkStatus === "pending"
+                        {isPaying
                           ? "PROCESSING PAYMENT..."
+                          : isEmailing
+                          ? "SENDING EMAIL..."
+                          : stkStatus === "pending"
+                          ? "AWAITING PAYMENT..."
                           : "CONFIRM & PAY"}
                       </button>
 
@@ -981,6 +1038,17 @@ const DubaiPage = () => {
                           }}
                         >
                           Please check your phone to complete payment
+                        </div>
+                      )}
+                      {error && (
+                        <div
+                          style={{
+                            marginTop: "16px",
+                            color: "#d32f2f",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {error}
                         </div>
                       )}
                     </div>
@@ -1021,7 +1089,7 @@ const DubaiPage = () => {
                       }}
                     >
                       Your reservation at {modalHotel.name} has been confirmed.
-                      A receipt has been sent to {bookingForm.email}. 
+                      A receipt has been sent to {bookingForm.email}
                     </p>
                     <button
                       onClick={() => setModalHotel(null)}
@@ -1045,6 +1113,34 @@ const DubaiPage = () => {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Global Styles */}
+      <style>
+        {`
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          body {
+            overflow-x: hidden;
+          }
+          button {
+            transition: all 0.3s ease;
+          }
+          button:hover {
+            opacity: 0.9;
+          }
+          input, textarea {
+            transition: all 0.3s ease;
+          }
+          input:focus, textarea:focus {
+            outline: none;
+            border-color: ${theme.accent} !important;
+            box-shadow: 0 0 0 2px ${theme.accent}33;
+          }
+        `}
+      </style>
     </div>
   );
 };

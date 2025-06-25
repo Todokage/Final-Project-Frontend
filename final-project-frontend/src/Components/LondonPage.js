@@ -2,65 +2,60 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-// London color theme
+// London color theme 
 const theme = {
-  primary: "#1a365d", // Royal Navy Blue
-  secondary: "#b22234", // British Red
-  accent: "#002366", // Oxford Blue
-  accent2: "#c19a6b", // Regal Gold
-  bg: "#f8f9fa", // Light neutral background
-  card: "#ffffff", // White cards
-  border: "#e2e8f0", // Light gray border
-  shadow: "rgba(0,0,0,0.1)",
-  text: "#2d3748", // Dark text
-  lightText: "#718096", // Gray text
+  primary: "#0a0a0a",
+  secondary: "#1a1a1a",
+  accent: "#C8102E",
+  accent2: "#012169", 
+  bg: "#f0f0f0",
+  card: "#ffffff",
+  border: "#e0e0e0",
+  shadow: "rgba(0,0,0,0.15)",
+  text: "#333",
+  lightText: "#888",
 };
 
-const GBP_TO_KES = 200; // British Pound to Kenyan Shillings conversion
+const GBP_TO_KES = 150;
 
 const hotels = [
   {
-    id: 1,
-    name: "The Ritz London",
-    description:
-      "Iconic 5-star hotel in Piccadilly with afternoon tea and luxurious accommodations",
-    price: 650 * GBP_TO_KES,
-    images: [
-      "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
-    ],
-    tags: ["Luxury", "Historic", "5-Star"],
-  },
-  {
-    id: 2,
     name: "The Savoy",
-    description:
-      "Legendary Thames-side hotel with Art Deco interiors and Michelin-star dining",
-    price: 700 * GBP_TO_KES,
+    description: "Iconic luxury hotel on the River Thames with Edwardian elegance",
+    price: 300 * GBP_TO_KES,
     images: [
       "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1522798514-97ceb8c4f1c8?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
     ],
-    tags: ["River View", "Luxury", "Landmark"],
+    tags: ["Luxury", "Historic", "River View"],
+  },
+  {
+    name: "The Hoxton, Shoreditch",
+    description: "Trendy boutique hotel in London's creative heartland",
+    price: 150 * GBP_TO_KES,
+    images: [
+      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1568084680786-a84f91d1153c?auto=format&fit=crop&w=800&q=80",
+    ],
+    tags: ["Boutique", "Artsy", "Vibrant"],
   },
 ];
 
 const slides = [
   {
-    id: 1,
     title: "Big Ben & Parliament",
-    image:
-      "https://images.unsplash.com/photo-1529655683826-aba9b3e77383?auto=format&fit=crop&w=1200&q=80",
-    description: "The iconic Elizabeth Tower and Houses of Parliament",
+    image: "https://images.unsplash.com/photo-1529655683826-aba9b3e77383?auto=format&fit=crop&w=1200&q=80",
+    description: "Iconic London landmarks and seat of British democracy",
   },
   {
-    id: 2,
     title: "Tower Bridge",
-    image:
-      "https://images.unsplash.com/photo-1526129318478-62ed807ebdf9?auto=format&fit=crop&w=1200&q=80",
-    description: "London's most famous Victorian bridge over the Thames",
+    image: "https://images.unsplash.com/photo-1520986606214-8b456906c813?auto=format&fit=crop&w=1200&q=80",
+    description: "Victorian engineering marvel spanning the River Thames",
   },
 ];
+
+// Backend URL for integration
+const BACKEND_URL = "http://localhost:3000"; 
 
 const LondonPage = () => {
   const navigate = useNavigate();
@@ -78,8 +73,12 @@ const LondonPage = () => {
   });
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [stkStatus, setStkStatus] = useState(null);
+  const [isPaying, setIsPaying] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  const [error, setError] = useState(null);
   const navbarRef = useRef(null);
   const [showHomeBtn, setShowHomeBtn] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Scroll effects
   useEffect(() => {
@@ -87,6 +86,7 @@ const LondonPage = () => {
       if (!navbarRef.current) return;
       const navbarBottom = navbarRef.current.getBoundingClientRect().bottom;
       setShowHomeBtn(navbarBottom < 0);
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -101,10 +101,8 @@ const LondonPage = () => {
         setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
       }, 3500);
     }
-    return () => {
-      if (imgInterval) clearInterval(imgInterval);
-    };
-  }, [modalHotel]);
+    return () => clearInterval(imgInterval);
+  }, [modalHotel, modalHotel?.images.length]);
 
   // Slide rotation
   useEffect(() => {
@@ -115,14 +113,12 @@ const LondonPage = () => {
   }, []);
 
   const handlePrevImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx(
       (prev) => (prev - 1 + modalHotel.images.length) % modalHotel.images.length
     );
   };
 
   const handleNextImage = () => {
-    if (!modalHotel) return;
     setModalImageIdx((prev) => (prev + 1) % modalHotel.images.length);
   };
 
@@ -135,17 +131,94 @@ const LondonPage = () => {
     ? modalHotel.price * (parseInt(bookingForm.guests, 10) || 1)
     : 0;
 
-  const simulateSTKPush = () => {
+  // --- MPESA STK Push Integration ---
+  const initiateSTKPush = async () => {
+    setIsPaying(true);
+    setError(null);
     setStkStatus("pending");
-    setTimeout(() => {
-      setStkStatus("success");
-      setBookingSuccess(true);
-    }, 2000);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/mpesa/stkpush`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: bookingForm.phone,
+          amount: totalPrice,
+          accountReference: "LondonHotel",
+          transactionDesc: `Booking for ${bookingForm.name}`,
+        }),
+      });
+      const data = await res.json();
+      if (data.ResponseCode === "0") {
+        setStkStatus("pending");
+        return true;
+      } else {
+        setError(
+          data.errorMessage ||
+            "Failed to initiate payment. Please check your phone number."
+        );
+        setStkStatus(null);
+        return false;
+      }
+    } catch (err) {
+      setError("Network error during payment.");
+      setStkStatus(null);
+      return false;
+    } finally {
+      setIsPaying(false);
+    }
   };
 
-  const handleBookingSubmit = (e) => {
+  // --- Email Integration ---
+  const sendBookingEmail = async () => {
+    setIsEmailing(true);
+    setError(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/email/booking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: bookingForm.email,
+          subject: "London Hotel Booking Confirmation",
+          text: `Dear ${bookingForm.name},\n\nYour booking at London Hotel is confirmed.\nCheck-in: ${bookingForm.checkIn}\nCheck-out: ${bookingForm.checkOut}\nGuests: ${bookingForm.guests}\nTotal: KES ${totalPrice}\n\nThank you!`,
+          html: `<p>Dear ${bookingForm.name},</p>
+            <p>Your booking at <b>London Hotel</b> is confirmed.</p>
+            <ul>
+              <li>Check-in: ${bookingForm.checkIn}</li>
+              <li>Check-out: ${bookingForm.checkOut}</li>
+              <li>Guests: ${bookingForm.guests}</li>
+              <li>Total: <b>KES ${totalPrice}</b></li>
+            </ul>
+            <p>Thank you!</p>`,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBookingSuccess(true);
+      } else {
+        setError("Failed to send confirmation email.");
+      }
+    } catch (err) {
+      setError("Network error during email sending.");
+    } finally {
+      setIsEmailing(false);
+    }
+  };
+
+  // Booking Submit Handler 
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    simulateSTKPush();
+    setBookingSuccess(false);
+    setError(null);
+
+    //  Initiate MPESA STK Push
+    const paymentOk = await initiateSTKPush();
+    if (!paymentOk) return;
+
+    
+
+    //  Send confirmation email
+    await sendBookingEmail();
+    setStkStatus(null);
   };
 
   return (
@@ -158,13 +231,13 @@ const LondonPage = () => {
         overflowX: "hidden",
       }}
     >
-      {/* Hero Section with London Skyline */}
+      {/* Edgy Hero Section with Diagonal Cut */}
       <div
         ref={navbarRef}
         style={{
           width: "100%",
           minHeight: "80vh",
-          background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.accent} 100%)`,
+          background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -175,15 +248,15 @@ const LondonPage = () => {
         }}
       >
         <img
-          src={slides[currentSlide]?.image}
-          alt={slides[currentSlide]?.title || "London"}
+          src={slides[currentSlide].image}
+          alt={slides[currentSlide].title}
           style={{
             position: "absolute",
             width: "100%",
             height: "100%",
             objectFit: "cover",
             opacity: 0.4,
-            filter: "brightness(0.8) contrast(120%)",
+            filter: "grayscale(30%) contrast(120%)",
           }}
         />
 
@@ -203,10 +276,11 @@ const LondonPage = () => {
             style={{
               fontSize: "clamp(2.5rem, 8vw, 5rem)",
               fontWeight: 900,
-              color: theme.accent2,
+              color: "#fff",
               letterSpacing: "-0.03em",
               marginBottom: "1rem",
-              textShadow: "3px 3px 0 rgba(0,0,0,0.3)",
+              textTransform: "uppercase",
+              textShadow: "3px 3px 0 rgba(0,0,0,0.2)",
             }}
           >
             LONDON
@@ -223,7 +297,7 @@ const LondonPage = () => {
               letterSpacing: "0.1em",
             }}
           >
-            {slides[currentSlide]?.title}
+            {slides[currentSlide].title}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -238,7 +312,7 @@ const LondonPage = () => {
               textShadow: "1px 1px 2px rgba(0,0,0,0.3)",
             }}
           >
-            {slides[currentSlide]?.description}
+            {slides[currentSlide].description}
           </motion.p>
         </div>
 
@@ -254,23 +328,21 @@ const LondonPage = () => {
             zIndex: 10,
           }}
         >
-          {slides.map((slide, idx) => (
+          {slides.map((_, idx) => (
             <button
-              key={slide.id}
+              key={idx}
               onClick={() => setCurrentSlide(idx)}
               style={{
                 width: "12px",
                 height: "12px",
                 background:
-                  idx === currentSlide
-                    ? theme.accent2
-                    : "rgba(255,255,255,0.3)",
+                  idx === currentSlide ? "#fff" : "rgba(255,255,255,0.3)",
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 transform: idx === currentSlide ? "scale(1.3)" : "scale(1)",
               }}
-              aria-label={`Go to ${slide.title}`}
+              aria-label={`Go to slide ${idx + 1}`}
             />
           ))}
         </div>
@@ -306,7 +378,7 @@ const LondonPage = () => {
         </motion.button>
       )}
 
-      {/* Hotel Cards Section */}
+      {/* Modern Hotel Cards Section */}
       <section
         style={{
           width: "100%",
@@ -333,7 +405,7 @@ const LondonPage = () => {
             transform: "translateX(-50%)",
           }}
         >
-          Luxury Hotels
+          Hotels
           <span
             style={{
               position: "absolute",
@@ -356,7 +428,7 @@ const LondonPage = () => {
         >
           {hotels.map((hotel) => (
             <motion.div
-              key={hotel.id}
+              key={hotel.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -499,6 +571,7 @@ const LondonPage = () => {
                       alignItems: "center",
                       gap: "8px",
                     }}
+                    whileHover={{ background: theme.accent }}
                   >
                     <span>BOOK NOW</span>
                     <span style={{ fontSize: "1.2rem" }}>→</span>
@@ -510,7 +583,7 @@ const LondonPage = () => {
         </div>
       </section>
 
-      {/* Hotel Booking Modal */}
+      {/* Modern Modal */}
       {modalHotel && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -562,7 +635,6 @@ const LondonPage = () => {
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              aria-label="Close modal"
             >
               ×
             </button>
@@ -585,7 +657,7 @@ const LondonPage = () => {
               >
                 <img
                   src={modalHotel.images[modalImageIdx]}
-                  alt={modalHotel.name}
+                  alt=""
                   style={{
                     width: "100%",
                     height: "100%",
@@ -611,7 +683,6 @@ const LondonPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Previous image"
                 >
                   ←
                 </button>
@@ -634,7 +705,6 @@ const LondonPage = () => {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  aria-label="Next image"
                 >
                   →
                 </button>
@@ -664,7 +734,6 @@ const LondonPage = () => {
                         cursor: "pointer",
                         padding: 0,
                       }}
-                      aria-label={`View image ${i + 1}`}
                     />
                   ))}
                 </div>
@@ -763,9 +832,9 @@ const LondonPage = () => {
                         marginBottom: "24px",
                       }}
                     >
+                      
                       <div>
                         <label
-                          htmlFor="name"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -777,7 +846,6 @@ const LondonPage = () => {
                         </label>
                         <input
                           type="text"
-                          id="name"
                           name="name"
                           value={bookingForm.name}
                           onChange={handleBookingChange}
@@ -790,7 +858,7 @@ const LondonPage = () => {
                           }}
                         />
                       </div>
-
+                      
                       <div>
                         <label
                           htmlFor="email"
@@ -819,9 +887,9 @@ const LondonPage = () => {
                         />
                       </div>
 
+
                       <div>
                         <label
-                          htmlFor="phone"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -833,7 +901,6 @@ const LondonPage = () => {
                         </label>
                         <input
                           type="tel"
-                          id="phone"
                           name="phone"
                           value={bookingForm.phone}
                           onChange={handleBookingChange}
@@ -849,7 +916,6 @@ const LondonPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkIn"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -861,7 +927,6 @@ const LondonPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkIn"
                           name="checkIn"
                           value={bookingForm.checkIn}
                           onChange={handleBookingChange}
@@ -877,7 +942,6 @@ const LondonPage = () => {
 
                       <div>
                         <label
-                          htmlFor="checkOut"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -889,7 +953,6 @@ const LondonPage = () => {
                         </label>
                         <input
                           type="date"
-                          id="checkOut"
                           name="checkOut"
                           value={bookingForm.checkOut}
                           onChange={handleBookingChange}
@@ -905,7 +968,6 @@ const LondonPage = () => {
 
                       <div>
                         <label
-                          htmlFor="guests"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -917,7 +979,6 @@ const LondonPage = () => {
                         </label>
                         <input
                           type="number"
-                          id="guests"
                           name="guests"
                           min="1"
                           max="10"
@@ -954,12 +1015,12 @@ const LondonPage = () => {
 
                       <button
                         type="submit"
-                        disabled={stkStatus === "pending"}
+                        disabled={stkStatus === "pending" || isPaying || isEmailing}
                         style={{
                           width: "100%",
                           padding: "16px",
                           background:
-                            stkStatus === "pending" ? "#ccc" : theme.accent,
+                            stkStatus === "pending" || isPaying || isEmailing ? "#ccc" : theme.accent,
                           color: "#fff",
                           border: "none",
                           fontWeight: 700,
@@ -968,8 +1029,12 @@ const LondonPage = () => {
                           fontSize: "1rem",
                         }}
                       >
-                        {stkStatus === "pending"
+                        {isPaying
                           ? "PROCESSING PAYMENT..."
+                          : isEmailing
+                          ? "SENDING EMAIL..."
+                          : stkStatus === "pending"
+                          ? "AWAITING PAYMENT..."
                           : "CONFIRM & PAY"}
                       </button>
 
@@ -982,6 +1047,17 @@ const LondonPage = () => {
                           }}
                         >
                           Please check your phone to complete payment
+                        </div>
+                      )}
+                      {error && (
+                        <div
+                          style={{
+                            marginTop: "16px",
+                            color: "#d32f2f",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {error}
                         </div>
                       )}
                     </div>
@@ -1022,7 +1098,7 @@ const LondonPage = () => {
                       }}
                     >
                       Your reservation at {modalHotel.name} has been confirmed.
-                      A receipt has been sent to {bookingForm.email}.
+                      A receipt has been sent to {bookingForm.email}
                     </p>
                     <button
                       onClick={() => setModalHotel(null)}
@@ -1046,6 +1122,34 @@ const LondonPage = () => {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Global Styles */}
+      <style>
+        {`
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          body {
+            overflow-x: hidden;
+          }
+          button {
+            transition: all 0.3s ease;
+          }
+          button:hover {
+            opacity: 0.9;
+          }
+          input, textarea {
+            transition: all 0.3s ease;
+          }
+          input:focus, textarea:focus {
+            outline: none;
+            border-color: ${theme.accent} !important;
+            box-shadow: 0 0 0 2px ${theme.accent}33;
+          }
+        `}
+      </style>
     </div>
   );
 };
